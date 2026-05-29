@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerago.com/intelligence-engine/schemas/repos.schema.json",
+  "title": "Xerago Intelligence Engine — Repository Registry",
+  "description": "Validates registry/repos.yaml",
+  "type": "object",
+  "required": ["version", "repositories"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^repos_v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "schema": {
+      "type": "string",
+      "const": "registry/schemas/repos.schema.json"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["updated_at", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "updated_at": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "documentation": { "type": "string" }
+      }
+    },
+    "tier_definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "A": { "$ref": "#/$defs/tier_definition" },
+        "B": { "$ref": "#/$defs/tier_definition" },
+        "C": { "$ref": "#/$defs/tier_definition" }
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repository" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "tier": {
+      "type": "string",
+      "enum": ["A", "B", "C"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2"]
+    },
+    "semver_action": {
+      "type": "string",
+      "enum": ["promote", "promote_if_keywords", "hold"]
+    },
+    "domain_slug": {
+      "type": "string",
+      "enum": [
+        "ai-ml",
+        "customer-experience",
+        "martech",
+        "analytics",
+        "personalization",
+        "automation",
+        "enterprise-ai",
+        "open-source-ecosystem",
+        "research-signals",
+        "industry-trends",
+        "cloud-platforms",
+        "data-engineering"
+      ]
+    },
+    "semver_policy": {
+      "type": "object",
+      "required": ["major", "minor", "patch"],
+      "additionalProperties": false,
+      "properties": {
+        "major": { "$ref": "#/$defs/semver_action" },
+        "minor": { "$ref": "#/$defs/semver_action" },
+        "patch": { "$ref": "#/$defs/semver_action" },
+        "non_semver": { "$ref": "#/$defs/semver_action" },
+        "patch_keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "minor_keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "milestone_keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    },
+    "tier_definition": {
+      "type": "object",
+      "required": ["priority", "poll_cadence", "semver_policy", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "priority": { "$ref": "#/$defs/priority" },
+        "poll_cadence": { "type": "string", "pattern": "^P.+$" },
+        "semver_policy": { "$ref": "#/$defs/semver_policy" },
+        "description": { "type": "string" }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "required": [
+        "repo_id",
+        "display_name",
+        "tier",
+        "entity",
+        "domains",
+        "track_releases",
+        "semver_policy",
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+/[a-z0-9_.-]+$",
+          "description": "GitHub org/repo in lowercase"
+        },
+        "display_name": { "type": "string", "minLength": 1 },
+        "tier": { "$ref": "#/$defs/tier" },
+        "entity": { "type": "string" },
+        "domains": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/domain_slug" },
+          "minItems": 1,
+          "maxItems": 4
+        },
+        "primary_domain": { "$ref": "#/$defs/domain_slug" },
+        "track_releases": { "type": "boolean" },
+        "track_tags": { "type": "boolean" },
+        "semver_policy": { "$ref": "#/$defs/semver_policy" },
+        "milestone_keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "priority": { "$ref": "#/$defs/priority" },
+        "enabled": { "type": "boolean" },
+        "poll_cadence": { "type": "string", "pattern": "^P.+$" },
+        "related_source_id": {
+          "type": "string",
+          "description": "Optional link to sources.yaml source_id for provenance clustering"
+        },
+        "product_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mvp": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

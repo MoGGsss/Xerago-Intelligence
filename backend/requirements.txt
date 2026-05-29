@@ -1,0 +1,7 @@
+# Sprint 1 — config, MySQL, registry loading
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+SQLAlchemy>=2.0,<3
+PyMySQL>=1.1,<2
+python-dotenv>=1.0,<2
+PyYAML>=6.0,<7

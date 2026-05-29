@@ -1,0 +1,510 @@
+# Xerago Intelligence Engine — Repository Registry
+# Documentation: docs/repository_tracking_strategy.md
+# Schema: registry/schemas/repos.schema.json
+#
+# Lifecycle monitoring: surface only on new version / milestone — never on trending or commits.
+
+version: repos_v1.0.0
+schema: registry/schemas/repos.schema.json
+
+metadata:
+  updated_at: "2026-05-29"
+  description: Curated GitHub repositories for OSS lifecycle signal detection
+  documentation: docs/repository_tracking_strategy.md
+
+tier_definitions:
+  A:
+    priority: P0
+    poll_cadence: PT1H
+    description: Strategic — Xerago delivery stacks, agents, enterprise AI runtimes
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE, deprecated, BREAKING CHANGE]
+      milestone_keywords: [GA, LTS, security, breaking]
+  B:
+    priority: P1
+    poll_cadence: PT4H
+    description: Ecosystem — important libraries and evaluation tooling
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, deprecated, security, BREAKING CHANGE]
+      patch_keywords: [security, CVE, breaking]
+      milestone_keywords: [GA, security]
+  C:
+    priority: P2
+    poll_cadence: PT12H
+    description: Watch — situational awareness; strict promotion bar
+    semver_policy:
+      major: promote
+      minor: hold
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, CVE]
+      milestone_keywords: [security]
+
+repositories:
+  # ─── Tier A (P0) — Agent / orchestration ──────────────────────────────────
+  - repo_id: langchain-ai/langgraph
+    display_name: LangGraph
+    tier: A
+    entity: ecosystem
+    domains: [automation, ai-ml, open-source-ecosystem]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    milestone_keywords: [breaking, security, GA]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [agents, orchestration, LangChain]
+    notes: Reference lifecycle example in repository_tracking_strategy.md
+
+  - repo_id: langchain-ai/langchain
+    display_name: LangChain
+    tier: A
+    entity: ecosystem
+    domains: [automation, ai-ml, open-source-ecosystem]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [LangChain, RAG, agents]
+
+  - repo_id: microsoft/autogen
+    display_name: Microsoft AutoGen
+    tier: A
+    entity: microsoft-ai
+    domains: [automation, enterprise-ai, open-source-ecosystem]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    related_source_id: ms-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [AutoGen, multi-agent]
+
+  - repo_id: microsoft/semantic-kernel
+    display_name: Microsoft Semantic Kernel
+    tier: A
+    entity: microsoft-ai
+    domains: [enterprise-ai, automation, open-source-ecosystem]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    related_source_id: ms-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [Semantic Kernel, Copilot]
+
+  - repo_id: run-llama/llama_index
+    display_name: LlamaIndex
+    tier: A
+    entity: ecosystem
+    domains: [ai-ml, automation, data-engineering]
+    primary_domain: ai-ml
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [RAG, indexing]
+
+  - repo_id: crewaiinc/crewai
+    display_name: CrewAI
+    tier: A
+    entity: ecosystem
+    domains: [automation, ai-ml, open-source-ecosystem]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [agents, crew]
+
+  # ─── Tier A (P0) — Enterprise AI runtimes ──────────────────────────────────
+  - repo_id: vllm-project/vllm
+    display_name: vLLM
+    tier: A
+    entity: ecosystem
+    domains: [ai-ml, enterprise-ai, cloud-platforms]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [inference, serving]
+
+  - repo_id: openai/openai-python
+    display_name: OpenAI Python SDK
+    tier: A
+    entity: openai
+    domains: [enterprise-ai, ai-ml, open-source-ecosystem]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    related_source_id: openai-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, deprecated, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [OpenAI, API]
+
+  - repo_id: anthropics/anthropic-sdk-python
+    display_name: Anthropic Python SDK
+    tier: A
+    entity: anthropic
+    domains: [enterprise-ai, ai-ml, open-source-ecosystem]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    related_source_id: anthropic-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, deprecated, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [Claude, API]
+
+  # ─── Tier A (P0) — RAG / data adjacency ───────────────────────────────────
+  - repo_id: chroma-core/chroma
+    display_name: Chroma
+    tier: A
+    entity: ecosystem
+    domains: [data-engineering, ai-ml, open-source-ecosystem]
+    primary_domain: data-engineering
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [vector store, RAG]
+
+  - repo_id: qdrant/qdrant
+    display_name: Qdrant
+    tier: A
+    entity: ecosystem
+    domains: [data-engineering, ai-ml, open-source-ecosystem]
+    primary_domain: data-engineering
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: false
+    product_tags: [vector store, embeddings]
+
+  # ─── Tier A (P0) — Partner-adjacent strategic repos ───────────────────────
+  - repo_id: salesforce/lwc
+    display_name: Salesforce Lightning Web Components
+    tier: A
+    entity: salesforce
+    domains: [martech, customer-experience, open-source-ecosystem]
+    primary_domain: martech
+    track_releases: true
+    track_tags: false
+    related_source_id: sf-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [LWC, Experience Cloud, development]
+
+  - repo_id: forcedotcom/cli
+    display_name: Salesforce CLI
+    tier: A
+    entity: salesforce
+    domains: [automation, cloud-platforms, open-source-ecosystem]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    related_source_id: sf-github
+    semver_policy:
+      major: promote
+      minor: promote
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, breaking, CVE]
+    priority: P0
+    enabled: true
+    mvp: true
+    product_tags: [SFDX, deployment]
+
+  # ─── Tier B (P1) — Hugging Face and eval tooling ──────────────────────────
+  - repo_id: huggingface/transformers
+    display_name: Hugging Face Transformers
+    tier: B
+    entity: huggingface
+    domains: [ai-ml, open-source-ecosystem, enterprise-ai]
+    primary_domain: ai-ml
+    track_releases: true
+    track_tags: false
+    related_source_id: hf-github
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, deprecated, security]
+      patch_keywords: [security, CVE]
+    priority: P1
+    enabled: true
+    mvp: true
+    product_tags: [Transformers, models]
+
+  - repo_id: huggingface/datasets
+    display_name: Hugging Face Datasets
+    tier: B
+    entity: huggingface
+    domains: [data-engineering, ai-ml, open-source-ecosystem]
+    primary_domain: data-engineering
+    track_releases: true
+    track_tags: false
+    related_source_id: hf-github
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, security]
+      patch_keywords: [security, CVE]
+    priority: P1
+    enabled: true
+    mvp: false
+
+  - repo_id: deepset-ai/haystack
+    display_name: Haystack
+    tier: B
+    entity: ecosystem
+    domains: [ai-ml, automation, open-source-ecosystem]
+    primary_domain: ai-ml
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, security]
+      patch_keywords: [security, CVE]
+    priority: P1
+    enabled: true
+    mvp: false
+    product_tags: [RAG, pipelines]
+
+  - repo_id: aurelio-labs/semantic-router
+    display_name: Semantic Router
+    tier: B
+    entity: ecosystem
+    domains: [ai-ml, automation, enterprise-ai]
+    primary_domain: ai-ml
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, security]
+      patch_keywords: [security, CVE]
+    priority: P1
+    enabled: true
+    mvp: false
+    product_tags: [routing, LLM]
+
+  - repo_id: pydantic/pydantic-ai
+    display_name: Pydantic AI
+    tier: B
+    entity: ecosystem
+    domains: [ai-ml, automation, enterprise-ai]
+    primary_domain: automation
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [breaking, API, security]
+      patch_keywords: [security, CVE]
+    priority: P1
+    enabled: true
+    mvp: false
+    product_tags: [agents, validation]
+
+  # ─── Tier B (P1) — MarTech / CMS open components ──────────────────────────
+  - repo_id: drupal/drupal
+    display_name: Drupal Core
+    tier: B
+    entity: acquia
+    domains: [martech, customer-experience, open-source-ecosystem]
+    primary_domain: martech
+    track_releases: true
+    track_tags: true
+    related_source_id: acquia-github
+    semver_policy:
+      major: promote
+      minor: promote_if_keywords
+      patch: promote_if_keywords
+      non_semver: hold
+      minor_keywords: [security, SA-CORE, breaking]
+      patch_keywords: [security, SA-CORE, CVE]
+    priority: P1
+    enabled: true
+    mvp: false
+    product_tags: [Drupal, CMS]
+
+  # ─── Tier C (P2) — Watch list ─────────────────────────────────────────────
+  - repo_id: apache/airflow
+    display_name: Apache Airflow
+    tier: C
+    entity: ecosystem
+    domains: [data-engineering, automation, cloud-platforms]
+    primary_domain: data-engineering
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: hold
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, CVE]
+    priority: P2
+    enabled: true
+    mvp: false
+    product_tags: [orchestration, pipelines]
+
+  - repo_id: mlflow/mlflow
+    display_name: MLflow
+    tier: C
+    entity: ecosystem
+    domains: [ai-ml, data-engineering, enterprise-ai]
+    primary_domain: ai-ml
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: hold
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, CVE]
+    priority: P2
+    enabled: true
+    mvp: false
+    product_tags: [MLOps, tracking]
+
+  - repo_id: traceloop/openllmetry
+    display_name: OpenLLMetry
+    tier: C
+    entity: ecosystem
+    domains: [enterprise-ai, analytics, open-source-ecosystem]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: hold
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, CVE]
+    priority: P2
+    enabled: true
+    mvp: false
+    product_tags: [observability, LLM]
+
+  - repo_id: berriai/litellm
+    display_name: LiteLLM
+    tier: C
+    entity: ecosystem
+    domains: [enterprise-ai, ai-ml, open-source-ecosystem]
+    primary_domain: enterprise-ai
+    track_releases: true
+    track_tags: false
+    semver_policy:
+      major: promote
+      minor: hold
+      patch: promote_if_keywords
+      non_semver: hold
+      patch_keywords: [security, CVE]
+    priority: P2
+    enabled: false
+    mvp: false
+    notes: Disabled pending practice review — enable after pilot

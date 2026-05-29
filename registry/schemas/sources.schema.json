@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerago.com/intelligence-engine/schemas/sources.schema.json",
+  "title": "Xerago Intelligence Engine — Sources Registry",
+  "description": "Validates registry/sources.yaml",
+  "type": "object",
+  "required": ["version", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^sources_v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "schema": {
+      "type": "string",
+      "const": "registry/schemas/sources.schema.json"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["updated_at", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "updated_at": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "documentation": { "type": "string" }
+      }
+    },
+    "taxonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "priorities": { "type": "array", "items": { "$ref": "#/$defs/priority" } },
+        "source_types": { "type": "array", "items": { "$ref": "#/$defs/source_type" } },
+        "trust_tiers": { "type": "array", "items": { "$ref": "#/$defs/trust_tier" } },
+        "ingestion_methods": { "type": "array", "items": { "$ref": "#/$defs/ingestion_method" } }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entity" },
+      "minItems": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3", "P4"]
+    },
+    "entity_group": {
+      "type": "string",
+      "enum": ["partner", "ai_vendor", "research", "industry", "ecosystem"]
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["blog", "docs", "github", "rss", "api", "newsletter", "press", "changelog", "community", "sitemap"]
+    },
+    "trust_tier": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3"]
+    },
+    "ingestion_method": {
+      "type": "string",
+      "enum": [
+        "pull_rss",
+        "pull_api",
+        "github_releases",
+        "github_org_releases",
+        "sitemap",
+        "scrape",
+        "email_parse",
+        "manual",
+        "webhook"
+      ]
+    },
+    "domain_slug": {
+      "type": "string",
+      "enum": [
+        "ai-ml",
+        "customer-experience",
+        "martech",
+        "analytics",
+        "personalization",
+        "automation",
+        "enterprise-ai",
+        "open-source-ecosystem",
+        "research-signals",
+        "industry-trends",
+        "cloud-platforms",
+        "data-engineering"
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "required": ["slug", "display_name", "group", "priority"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "group": { "$ref": "#/$defs/entity_group" },
+        "priority": { "$ref": "#/$defs/priority" },
+        "default_domains": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/domain_slug" },
+          "minItems": 1,
+          "maxItems": 4
+        },
+        "product_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "source_id",
+        "name",
+        "entity",
+        "source_type",
+        "ingestion_method",
+        "trust_tier",
+        "priority",
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "entity": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "source_type": { "$ref": "#/$defs/source_type" },
+        "base_url": { "type": "string", "format": "uri" },
+        "feed_url": { "type": "string", "format": "uri" },
+        "ingestion_method": { "$ref": "#/$defs/ingestion_method" },
+        "refresh_cadence": {
+          "type": "string",
+          "description": "ISO 8601 duration (e.g. PT4H) or cron expression prefixed with cron:",
+          "pattern": "^(P.+|cron:.+)$"
+        },
+        "trust_tier": { "$ref": "#/$defs/trust_tier" },
+        "priority": { "$ref": "#/$defs/priority" },
+        "enabled": { "type": "boolean" },
+        "default_domains": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/domain_slug" },
+          "maxItems": 4
+        },
+        "rate_limit_rpm": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        "github_org": {
+          "type": "string",
+          "description": "GitHub organization for org-wide release monitoring"
+        },
+        "filters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "tags": { "type": "array", "items": { "type": "string" } },
+            "categories": { "type": "array", "items": { "type": "string" } },
+            "keywords": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "mvp_wave": {
+          "type": "integer",
+          "enum": [1, 2, 3]
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

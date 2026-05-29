@@ -1,0 +1,848 @@
+# Xerago Intelligence Engine — Source Registry
+# Documentation: docs/sources.md
+# Schema: registry/schemas/sources.schema.json
+
+version: sources_v1.0.0
+schema: registry/schemas/sources.schema.json
+
+metadata:
+  updated_at: "2026-05-29"
+  description: Authoritative registry of ingestion sources for the Enterprise Technology Radar
+  documentation: docs/sources.md
+
+taxonomy:
+  priorities:
+    - id: P0
+      label: Partner ecosystem
+      ingest_sla_hours: 2
+    - id: P1
+      label: AI vendors
+      ingest_sla_hours: 4
+    - id: P2
+      label: Open source (curated repos)
+      ingest_sla_hours: 4
+      registry: registry/repos.yaml
+    - id: P3
+      label: Research
+      ingest_sla_hours: 24
+    - id: P4
+      label: Industry intelligence
+      ingest_sla_hours: 4
+  source_types:
+    - blog
+    - docs
+    - github
+    - rss
+    - api
+    - newsletter
+    - press
+    - changelog
+    - community
+    - sitemap
+  trust_tiers:
+    - id: T1
+      label: Primary — official entity channels
+      can_originate_strategic_signal: true
+    - id: T2
+      label: Curated third-party
+      can_originate_strategic_signal: true
+    - id: T3
+      label: Secondary — corroboration only
+      can_originate_strategic_signal: false
+  ingestion_methods:
+    - pull_rss
+    - pull_api
+    - github_releases
+    - github_org_releases
+    - sitemap
+    - scrape
+    - email_parse
+    - manual
+    - webhook
+
+entities:
+  - slug: adobe
+    display_name: Adobe
+    group: partner
+    priority: P0
+    default_domains: [martech, personalization, analytics, customer-experience]
+    product_tags: [Experience Cloud, Marketo, Analytics, Target, AEM, Firefly, GenStudio]
+
+  - slug: salesforce
+    display_name: Salesforce
+    group: partner
+    priority: P0
+    default_domains: [martech, customer-experience, analytics, automation]
+    product_tags: [Marketing Cloud, Data Cloud, Agentforce, MuleSoft, Tableau]
+
+  - slug: ibm
+    display_name: IBM
+    group: partner
+    priority: P0
+    default_domains: [enterprise-ai, cloud-platforms, analytics, automation]
+    product_tags: [watsonx, Instana, Cloud Pak, Sterling, Unica]
+
+  - slug: sas
+    display_name: SAS
+    group: partner
+    priority: P0
+    default_domains: [analytics, ai-ml, martech]
+    product_tags: [Viya, Customer Intelligence, Model Manager]
+
+  - slug: acquia
+    display_name: Acquia
+    group: partner
+    priority: P0
+    default_domains: [martech, personalization, customer-experience]
+    product_tags: [Drupal Cloud, DAM, CDP, personalization]
+
+  - slug: acoustic
+    display_name: Acoustic
+    group: partner
+    priority: P0
+    default_domains: [martech, customer-experience, analytics]
+    product_tags: [Campaign, Connect, Exchange, Tealeaf]
+
+  - slug: hcl
+    display_name: HCL
+    group: partner
+    priority: P0
+    default_domains: [martech, cloud-platforms, customer-experience]
+    product_tags: [Unica, Commerce, DX, BigFix]
+
+  - slug: unica
+    display_name: Unica
+    group: partner
+    priority: P0
+    default_domains: [martech, analytics, automation]
+    product_tags: [Unica Campaign, Interact, LeadDetect, Deliver]
+
+  - slug: openai
+    display_name: OpenAI
+    group: ai_vendor
+    priority: P1
+    default_domains: [enterprise-ai, ai-ml, automation]
+    product_tags: [GPT, API, Assistants]
+
+  - slug: google-ai
+    display_name: Google AI
+    group: ai_vendor
+    priority: P1
+    default_domains: [enterprise-ai, ai-ml, cloud-platforms]
+    product_tags: [Gemini, DeepMind, Vertex AI]
+
+  - slug: microsoft-ai
+    display_name: Microsoft AI
+    group: ai_vendor
+    priority: P1
+    default_domains: [enterprise-ai, cloud-platforms, automation]
+    product_tags: [Copilot, Azure OpenAI, Semantic Kernel]
+
+  - slug: anthropic
+    display_name: Anthropic
+    group: ai_vendor
+    priority: P1
+    default_domains: [enterprise-ai, ai-ml, automation]
+    product_tags: [Claude, API, tool-use]
+
+  - slug: huggingface
+    display_name: HuggingFace
+    group: ai_vendor
+    priority: P1
+    default_domains: [ai-ml, open-source-ecosystem, enterprise-ai]
+    product_tags: [Transformers, Hub, Daily Papers]
+
+  - slug: stanford-ai
+    display_name: Stanford AI
+    group: research
+    priority: P3
+    default_domains: [research-signals, enterprise-ai, industry-trends]
+    product_tags: [HAI, AI Index]
+
+  - slug: papers-with-code
+    display_name: Papers With Code
+    group: research
+    priority: P3
+    default_domains: [research-signals, ai-ml]
+    product_tags: [benchmarks, SOTA]
+
+  - slug: techcrunch-ai
+    display_name: TechCrunch AI
+    group: industry
+    priority: P4
+    default_domains: [industry-trends, enterprise-ai]
+    product_tags: []
+
+  - slug: verge-ai
+    display_name: Verge AI
+    group: industry
+    priority: P4
+    default_domains: [industry-trends]
+    product_tags: []
+
+  - slug: tldr-ai
+    display_name: TLDR AI
+    group: industry
+    priority: P4
+    default_domains: [industry-trends, ai-ml]
+    product_tags: []
+
+sources:
+  # ─── Adobe (P0) ───────────────────────────────────────────────────────────
+  - source_id: adobe-blog
+    name: Adobe Blog
+    entity: adobe
+    source_type: blog
+    base_url: https://blog.adobe.com
+    feed_url: https://blog.adobe.com/en/feed
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: adobe-product-docs
+    name: Adobe Experience Cloud Docs
+    entity: adobe
+    source_type: docs
+    base_url: https://experienceleague.adobe.com
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: adobe-github
+    name: Adobe Open Source
+    entity: adobe
+    source_type: github
+    base_url: https://github.com/adobe
+    ingestion_method: github_org_releases
+    github_org: adobe
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    default_domains: [open-source-ecosystem, martech]
+    mvp_wave: 1
+    notes: Org-wide release monitoring; curated repos also in registry/repos.yaml
+
+  - source_id: adobe-press
+    name: Adobe Newsroom
+    entity: adobe
+    source_type: press
+    base_url: https://news.adobe.com
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 1
+
+  # ─── Salesforce (P0) ──────────────────────────────────────────────────────
+  - source_id: sf-blog
+    name: Salesforce Blog
+    entity: salesforce
+    source_type: blog
+    base_url: https://www.salesforce.com/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: sf-release-notes
+    name: Salesforce Release Notes
+    entity: salesforce
+    source_type: docs
+    base_url: https://help.salesforce.com
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: sf-github
+    name: Salesforce GitHub
+    entity: salesforce
+    source_type: github
+    base_url: https://github.com/salesforce
+    ingestion_method: github_org_releases
+    github_org: salesforce
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    default_domains: [open-source-ecosystem, automation]
+    mvp_wave: 1
+
+  - source_id: sf-trailhead
+    name: Trailhead and Agentforce Announcements
+    entity: salesforce
+    source_type: blog
+    base_url: https://trailhead.salesforce.com
+    ingestion_method: pull_rss
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── IBM (P0) ─────────────────────────────────────────────────────────────
+  - source_id: ibm-newsroom
+    name: IBM Newsroom
+    entity: ibm
+    source_type: press
+    base_url: https://newsroom.ibm.com
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: ibm-watson-docs
+    name: IBM watsonx and Cloud Docs
+    entity: ibm
+    source_type: docs
+    base_url: https://cloud.ibm.com/docs
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: ibm-github
+    name: IBM GitHub
+    entity: ibm
+    source_type: github
+    base_url: https://github.com/IBM
+    ingestion_method: github_org_releases
+    github_org: IBM
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    default_domains: [open-source-ecosystem, enterprise-ai]
+    mvp_wave: 1
+
+  - source_id: ibm-research
+    name: IBM Research Blog
+    entity: ibm
+    source_type: blog
+    base_url: https://research.ibm.com/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── SAS (P0) ─────────────────────────────────────────────────────────────
+  - source_id: sas-news
+    name: SAS Newsroom
+    entity: sas
+    source_type: press
+    base_url: https://www.sas.com/en/news
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: sas-blog
+    name: SAS Blogs
+    entity: sas
+    source_type: blog
+    base_url: https://blogs.sas.com
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: sas-github
+    name: SAS GitHub
+    entity: sas
+    source_type: github
+    base_url: https://github.com/sassoftware
+    ingestion_method: github_org_releases
+    github_org: sassoftware
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── Acquia (P0) ──────────────────────────────────────────────────────────
+  - source_id: acquia-blog
+    name: Acquia Blog
+    entity: acquia
+    source_type: blog
+    base_url: https://www.acquia.com/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: acquia-product
+    name: Acquia Product Updates
+    entity: acquia
+    source_type: docs
+    base_url: https://docs.acquia.com
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: acquia-github
+    name: Acquia GitHub
+    entity: acquia
+    source_type: github
+    base_url: https://github.com/acquia
+    ingestion_method: github_org_releases
+    github_org: acquia
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── Acoustic (P0) ──────────────────────────────────────────────────────
+  - source_id: acoustic-blog
+    name: Acoustic Blog
+    entity: acoustic
+    source_type: blog
+    base_url: https://acoustic.com/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: acoustic-docs
+    name: Acoustic Documentation
+    entity: acoustic
+    source_type: docs
+    base_url: https://developer.acoustic.com
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: acoustic-github
+    name: Acoustic GitHub
+    entity: acoustic
+    source_type: github
+    base_url: https://github.com/go-acoustic
+    ingestion_method: github_org_releases
+    github_org: go-acoustic
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── HCL (P0) ─────────────────────────────────────────────────────────────
+  - source_id: hcl-news
+    name: HCLTech Newsroom
+    entity: hcl
+    source_type: press
+    base_url: https://www.hcltech.com/newsroom
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: hcl-unica-docs
+    name: HCL Software Marketing and Unica Docs
+    entity: hcl
+    source_type: docs
+    base_url: https://help.hcl-software.com
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    default_domains: [martech, analytics]
+    mvp_wave: 2
+
+  - source_id: hcl-github
+    name: HCL Software GitHub
+    entity: hcl
+    source_type: github
+    base_url: https://github.com/hcl-tech-software
+    ingestion_method: github_org_releases
+    github_org: hcl-tech-software
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  # ─── Unica (P0) ───────────────────────────────────────────────────────────
+  - source_id: unica-release-notes
+    name: HCL Unica Release Notes
+    entity: unica
+    source_type: docs
+    base_url: https://help.hcl-software.com/unica
+    ingestion_method: sitemap
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P0
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: unica-community
+    name: Unica Practitioner Community
+    entity: unica
+    source_type: community
+    base_url: https://community.hcl-software.com
+    ingestion_method: scrape
+    refresh_cadence: PT24H
+    trust_tier: T3
+    priority: P0
+    enabled: false
+    notes: T3 corroboration only; enable after ToS review
+
+  # ─── OpenAI (P1) ────────────────────────────────────────────────────────
+  - source_id: openai-blog
+    name: OpenAI Blog and News
+    entity: openai
+    source_type: blog
+    base_url: https://openai.com/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: openai-github
+    name: OpenAI GitHub
+    entity: openai
+    source_type: github
+    base_url: https://github.com/openai
+    ingestion_method: github_org_releases
+    github_org: openai
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: openai-changelog
+    name: OpenAI API and Platform Changelog
+    entity: openai
+    source_type: changelog
+    base_url: https://platform.openai.com/docs/changelog
+    ingestion_method: scrape
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  # ─── Google AI (P1) ─────────────────────────────────────────────────────
+  - source_id: google-ai-blog
+    name: Google AI and DeepMind Blog
+    entity: google-ai
+    source_type: blog
+    base_url: https://blog.google/technology/ai
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: google-cloud-ai
+    name: Google Cloud AI Announcements
+    entity: google-ai
+    source_type: blog
+    base_url: https://cloud.google.com/blog/products/ai-machine-learning
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: google-github
+    name: Google AI GitHub Organizations
+    entity: google-ai
+    source_type: github
+    base_url: https://github.com/google-deepmind
+    ingestion_method: github_org_releases
+    github_org: google-deepmind
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    notes: Also monitor google-gemini org via separate FreshRSS or second poller
+    mvp_wave: 2
+
+  # ─── Microsoft AI (P1) ────────────────────────────────────────────────────
+  - source_id: ms-ai-blog
+    name: Microsoft AI Blog
+    entity: microsoft-ai
+    source_type: blog
+    base_url: https://blogs.microsoft.com/ai
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: ms-azure-openai
+    name: Azure OpenAI and Copilot Updates
+    entity: microsoft-ai
+    source_type: docs
+    base_url: https://learn.microsoft.com/azure/ai-services
+    ingestion_method: sitemap
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: ms-github
+    name: Microsoft GitHub Releases
+    entity: microsoft-ai
+    source_type: github
+    base_url: https://github.com/microsoft
+    ingestion_method: github_org_releases
+    github_org: microsoft
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    notes: Broad org; strategic repos curated in registry/repos.yaml
+    mvp_wave: 2
+
+  # ─── Anthropic (P1) ─────────────────────────────────────────────────────
+  - source_id: anthropic-news
+    name: Anthropic News
+    entity: anthropic
+    source_type: press
+    base_url: https://www.anthropic.com/news
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 1
+
+  - source_id: anthropic-docs
+    name: Claude Documentation and API Changelog
+    entity: anthropic
+    source_type: docs
+    base_url: https://docs.anthropic.com
+    ingestion_method: sitemap
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: anthropic-github
+    name: Anthropic GitHub
+    entity: anthropic
+    source_type: github
+    base_url: https://github.com/anthropics
+    ingestion_method: github_org_releases
+    github_org: anthropics
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 1
+
+  # ─── Hugging Face (P1) ──────────────────────────────────────────────────
+  - source_id: hf-blog
+    name: Hugging Face Blog
+    entity: huggingface
+    source_type: blog
+    base_url: https://huggingface.co/blog
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: hf-papers
+    name: Hugging Face Daily Papers
+    entity: huggingface
+    source_type: api
+    base_url: https://huggingface.co/papers
+    ingestion_method: pull_api
+    refresh_cadence: PT4H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    default_domains: [research-signals, ai-ml]
+    notes: Ingest to research store; promotion via research gate
+    mvp_wave: 3
+
+  - source_id: hf-github
+    name: Hugging Face GitHub
+    entity: huggingface
+    source_type: github
+    base_url: https://github.com/huggingface
+    ingestion_method: github_org_releases
+    github_org: huggingface
+    refresh_cadence: PT1H
+    trust_tier: T1
+    priority: P1
+    enabled: true
+    mvp_wave: 2
+
+  - source_id: hf-model-hub
+    name: Hugging Face Hub Trending Metadata
+    entity: huggingface
+    source_type: api
+    base_url: https://huggingface.co/models
+    ingestion_method: pull_api
+    refresh_cadence: PT6H
+    trust_tier: T2
+    priority: P1
+    enabled: false
+    notes: Disabled — trending violates lifecycle philosophy; use hf-github and repos.yaml instead
+
+  # ─── Stanford AI (P3) ───────────────────────────────────────────────────
+  - source_id: stanford-hai
+    name: Stanford HAI
+    entity: stanford-ai
+    source_type: blog
+    base_url: https://hai.stanford.edu
+    ingestion_method: pull_rss
+    refresh_cadence: PT24H
+    trust_tier: T1
+    priority: P3
+    enabled: true
+    default_domains: [research-signals, enterprise-ai]
+    mvp_wave: 3
+
+  - source_id: stanford-ai-index
+    name: Stanford AI Index Report
+    entity: stanford-ai
+    source_type: api
+    base_url: https://aiindex.stanford.edu
+    ingestion_method: manual
+    refresh_cadence: cron:0 9 1 1,4,7,10 *
+    trust_tier: T1
+    priority: P3
+    enabled: true
+    notes: Event-driven; quarterly check plus annual report ingest
+    mvp_wave: 3
+
+  - source_id: stanford-snap
+    name: Stanford SNAP and Selected Labs
+    entity: stanford-ai
+    source_type: blog
+    base_url: https://snap.stanford.edu
+    ingestion_method: pull_rss
+    refresh_cadence: PT24H
+    trust_tier: T2
+    priority: P3
+    enabled: false
+    mvp_wave: 3
+
+  # ─── Papers With Code (P3) ────────────────────────────────────────────────
+  - source_id: pwc-trending
+    name: Papers With Code Trending Papers
+    entity: papers-with-code
+    source_type: api
+    base_url: https://paperswithcode.com
+    ingestion_method: pull_api
+    refresh_cadence: PT6H
+    trust_tier: T2
+    priority: P3
+    enabled: true
+    default_domains: [research-signals, ai-ml]
+    notes: Research store by default; rarely promote
+    mvp_wave: 3
+
+  - source_id: pwc-benchmarks
+    name: Papers With Code Benchmark SOTA
+    entity: papers-with-code
+    source_type: api
+    base_url: https://paperswithcode.com/sota
+    ingestion_method: pull_api
+    refresh_cadence: PT12H
+    trust_tier: T2
+    priority: P3
+    enabled: true
+    mvp_wave: 3
+
+  - source_id: pwc-datasets
+    name: Papers With Code Datasets
+    entity: papers-with-code
+    source_type: api
+    base_url: https://paperswithcode.com/datasets
+    ingestion_method: pull_api
+    refresh_cadence: PT24H
+    trust_tier: T3
+    priority: P3
+    enabled: true
+    notes: Research store only; no strategic promotion
+    mvp_wave: 3
+
+  # ─── Industry (P4) ────────────────────────────────────────────────────────
+  - source_id: tc-ai
+    name: TechCrunch AI
+    entity: techcrunch-ai
+    source_type: rss
+    base_url: https://techcrunch.com/category/artificial-intelligence
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T2
+    priority: P4
+    enabled: true
+    filters:
+      tags: [AI, artificial-intelligence]
+      keywords: [Adobe, Salesforce, IBM, SAS, Acquia, OpenAI, Anthropic, enterprise, MarTech, CDP]
+    notes: Narrative amplifier; cannot originate partner signals without T1 corroboration
+    mvp_wave: 2
+
+  - source_id: verge-ai
+    name: The Verge AI
+    entity: verge-ai
+    source_type: rss
+    base_url: https://www.theverge.com/ai-artificial-intelligence
+    ingestion_method: pull_rss
+    refresh_cadence: PT2H
+    trust_tier: T2
+    priority: P4
+    enabled: true
+    mvp_wave: 3
+
+  - source_id: tldr-ai
+    name: TLDR AI Newsletter
+    entity: tldr-ai
+    source_type: newsletter
+    base_url: https://tldr.tech/ai
+    ingestion_method: email_parse
+    refresh_cadence: PT24H
+    trust_tier: T2
+    priority: P4
+    enabled: true
+    mvp_wave: 2
