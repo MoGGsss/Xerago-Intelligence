@@ -42,6 +42,19 @@ class Settings(BaseSettings):
     mysql_charset: str = Field(default="utf8mb4", alias="MYSQL_CHARSET")
     db_echo: bool = Field(default=False, alias="DB_ECHO")
 
+    # LLM (Sprint 3A — Ollama)
+    llm_provider: str = Field(default="ollama", alias="LLM_PROVIDER")
+    ollama_base_url: str = Field(
+        default="http://127.0.0.1:11434",
+        alias="OLLAMA_BASE_URL",
+    )
+    ollama_model: str = Field(default="gpt-oss:20b", alias="OLLAMA_MODEL")
+    ollama_timeout_seconds: float = Field(default=300.0, alias="OLLAMA_TIMEOUT_SECONDS")
+    ingest_scheduler_interval_minutes: int = Field(
+        default=15,
+        alias="INGEST_SCHEDULER_INTERVAL_MINUTES",
+    )
+
     # Repository root (contains registry/sources.yaml)
     project_root: Path | None = Field(default=None, alias="PROJECT_ROOT")
 

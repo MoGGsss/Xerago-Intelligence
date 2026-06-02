@@ -5,3 +5,10 @@ SQLAlchemy>=2.0,<3
 PyMySQL>=1.1,<2
 python-dotenv>=1.0,<2
 PyYAML>=6.0,<7
+feedparser>=6.0,<7
+requests>=2.31,<3
+certifi>=2024.2.2
+urllib3>=2.0,<3
+# Sprint 5 — read API
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
