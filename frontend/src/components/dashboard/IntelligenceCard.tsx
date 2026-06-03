@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { ChevronDown, ExternalLink } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { PriorityLevel } from '../../types/intelligence'
+import type { DepartmentImpactView, PriorityLevel } from '../../types/intelligence'
+import ArticleFeedbackFooter from './ArticleFeedbackFooter'
+import DepartmentImpactSection from './DepartmentImpactSection'
 
 interface IntelligenceCardProps {
+  artifactId?: string
+  feedbackDepartmentName?: string | null
   priorityLevel?: PriorityLevel | string
   strategicScore?: number
   title: string
@@ -13,6 +17,8 @@ interface IntelligenceCardProps {
   domain: string
   url: string
   icon: LucideIcon
+  departmentImpact?: DepartmentImpactView | null
+  departmentLabel?: string
   onSelect?: () => void
 }
 
@@ -44,6 +50,8 @@ function priorityStyles(level?: string): string {
 }
 
 export default function IntelligenceCard({
+  artifactId,
+  feedbackDepartmentName,
   priorityLevel,
   strategicScore,
   title,
@@ -53,6 +61,8 @@ export default function IntelligenceCard({
   domain,
   url,
   icon: Icon,
+  departmentImpact,
+  departmentLabel = 'Your department',
   onSelect,
 }: IntelligenceCardProps) {
   const [whyExpanded, setWhyExpanded] = useState(false)
@@ -62,7 +72,7 @@ export default function IntelligenceCard({
 
   return (
     <article
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-emerald-200/80 hover:shadow-[0_12px_32px_rgba(15,23,42,0.1)]"
+      className="group flex h-full flex-col overflow-visible rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-emerald-200/80 hover:shadow-[0_12px_32px_rgba(15,23,42,0.1)]"
       onClick={(event) => {
         if (!onSelect) {
           return
@@ -124,11 +134,18 @@ export default function IntelligenceCard({
           {title}
         </h3>
 
-        <p className="mt-3 line-clamp-4 flex-1 text-sm leading-relaxed text-slate-600">
+        <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-slate-600">
           {description}
         </p>
 
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        {departmentImpact ? (
+          <DepartmentImpactSection
+            impact={departmentImpact}
+            departmentLabel={departmentLabel}
+          />
+        ) : null}
+
+        <div className="mt-4 flex-1 border-t border-slate-100 pt-4">
           <button
             type="button"
             onClick={() => setWhyExpanded((open) => !open)}
@@ -153,20 +170,22 @@ export default function IntelligenceCard({
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <p className="text-xs font-medium text-slate-400">
-            Strategic score{' '}
-            <span className="font-semibold text-slate-700">{scoreDisplay}</span>
-          </p>
+        <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
           <a
             href={url}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white no-underline shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md"
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white no-underline shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md"
           >
             Read Article
-            <ExternalLink size={14} strokeWidth={2.5} aria-hidden="true" />
+            <ExternalLink size={13} strokeWidth={2.5} aria-hidden="true" />
           </a>
+          {artifactId && feedbackDepartmentName ? (
+            <ArticleFeedbackFooter
+              artifactId={artifactId}
+              departmentName={feedbackDepartmentName}
+            />
+          ) : null}
         </div>
       </div>
     </article>

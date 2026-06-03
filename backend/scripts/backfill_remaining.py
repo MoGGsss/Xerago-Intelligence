@@ -21,6 +21,7 @@ from xerago_intelligence.db.models.artifact import Artifact
 from xerago_intelligence.db.models.artifact_enrichment import ArtifactEnrichment
 from xerago_intelligence.db.repositories.enrichment_repository import EnrichmentRepository
 from xerago_intelligence.enrichment.service import ArtifactEnrichmentService
+from xerago_intelligence.filtering import EnrichmentSkippedError
 from xerago_intelligence.scoring import ScoreInput, StrategicScorer
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 class BackfillSummary:
     total: int
     succeeded: int
+    skipped_negative: int
     failed: int
     elapsed_time: str
 
@@ -104,6 +106,7 @@ def run_backfill() -> BackfillSummary:
     artifact_ids = _find_artifacts_missing_enrichment()
     total = len(artifact_ids)
     succeeded = 0
+    skipped_negative = 0
     failed = 0
 
     print("Backfill remaining artifacts (enrichment + scoring)", flush=True)
@@ -114,6 +117,12 @@ def run_backfill() -> BackfillSummary:
         try:
             _process_one_artifact(artifact_id)
             succeeded += 1
+        except EnrichmentSkippedError as exc:
+            skipped_negative += 1
+            print(
+                f"[{idx}/{total}] SKIP   {artifact_id} — {exc.result.skip_reason}",
+                flush=True,
+            )
         except Exception as exc:  # noqa: BLE001
             failed += 1
             logger.exception("Failed artifact_id=%s", artifact_id)
@@ -122,7 +131,8 @@ def run_backfill() -> BackfillSummary:
 
         if idx % 10 == 0 or idx == total:
             print(
-                f"[{idx}/{total}] progress succeeded={succeeded} failed={failed}",
+                f"[{idx}/{total}] progress succeeded={succeeded} "
+                f"skipped_negative={skipped_negative} failed={failed}",
                 flush=True,
             )
 
@@ -130,6 +140,7 @@ def run_backfill() -> BackfillSummary:
     return BackfillSummary(
         total=total,
         succeeded=succeeded,
+        skipped_negative=skipped_negative,
         failed=failed,
         elapsed_time=elapsed,
     )
@@ -143,6 +154,7 @@ def main() -> int:
     print("=" * 64, flush=True)
     print(f"total:       {summary.total}", flush=True)
     print(f"succeeded:   {summary.succeeded}", flush=True)
+    print(f"skipped_neg: {summary.skipped_negative}", flush=True)
     print(f"failed:      {summary.failed}", flush=True)
     print(f"elapsed_time:{summary.elapsed_time}", flush=True)
 

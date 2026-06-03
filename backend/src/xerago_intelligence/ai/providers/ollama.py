@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 
 import requests
@@ -50,19 +51,21 @@ class OllamaClient(AIClient):
             "stream": False,
         }
 
-        logger.info(
-            "Ollama generate — model=%s url=%s prompt_chars=%s json_mode=ignored",
+        logger.debug(
+            "Ollama generate start — model=%s url=%s prompt_chars=%s",
             self._model,
             url,
             len(prompt),
         )
 
+        started = time.perf_counter()
         response = self._session.post(
             url,
             json=payload,
             timeout=self._timeout,
         )
         response.raise_for_status()
+        http_ms = (time.perf_counter() - started) * 1000
         data = response.json()
         if not isinstance(data, dict):
             raise OllamaResponseError(
@@ -70,13 +73,24 @@ class OllamaClient(AIClient):
                 raw=data,
             )
 
-        raw_json = json.dumps(data, ensure_ascii=False, default=str)
-        logger.info("Raw HTTP JSON: %s", raw_json)
-        print(f"Raw HTTP JSON: {raw_json}", flush=True)
-
         text, source_field = _extract_generate_text(data)
-        logger.info("Mapped text (from %s, len=%s): %s", source_field, len(text), text)
-        print(f"Mapped text: {text}", flush=True)
+        model = str(data.get("model") or self._model)
+        total_duration_ns = data.get("total_duration")
+
+        logger.info(
+            "Ollama generate complete — model=%s response_len=%s source_field=%s "
+            "http_ms=%.1f total_duration_ns=%s",
+            model,
+            len(text),
+            source_field,
+            http_ms,
+            total_duration_ns,
+        )
+        logger.debug(
+            "Ollama raw response JSON: %s",
+            json.dumps(data, ensure_ascii=False, default=str),
+        )
+        logger.debug("Ollama mapped text: %s", text)
 
         if not text:
             raise OllamaResponseError(
@@ -88,7 +102,7 @@ class OllamaClient(AIClient):
 
         return GenerateResult(
             text=text,
-            model=str(data.get("model") or self._model),
+            model=model,
             provider=self.provider_name,
         )
 

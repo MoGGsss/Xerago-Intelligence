@@ -130,6 +130,33 @@ export default function IntelligenceDetailPanel({
             </p>
           </section>
 
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Departments
+            </h3>
+            {item.departments && item.departments.length > 0 ? (
+              <ul className="mt-2 space-y-2">
+                {item.departments.map((dept) => (
+                  <li
+                    key={dept.department_name}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium text-slate-800">
+                      {dept.department_name}
+                    </span>
+                    <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-emerald-700">
+                      {dept.department_relevance_score}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : item.department ? (
+              <p className="mt-2 text-sm font-medium text-slate-800">{item.department}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">Not mapped</p>
+            )}
+          </section>
+
           <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="grid grid-cols-1 gap-3 text-sm text-slate-700">
               <p>

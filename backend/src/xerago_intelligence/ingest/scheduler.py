@@ -1,21 +1,19 @@
-"""Background scheduler for periodic RSS ingest + enrichment."""
+"""Background scheduler for automated intelligence refresh (Phase 9)."""
 
 from __future__ import annotations
 
 import logging
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from time import sleep
 
 from xerago_intelligence.db import session_scope
-from xerago_intelligence.db.repositories.artifact_repository import ArtifactRepository
-from xerago_intelligence.enrichment.service import ArtifactEnrichmentService
-from xerago_intelligence.ingest.rss import RssIngestionService
-from xerago_intelligence.registry.loader import load_sources_registry
-from xerago_intelligence.registry.models import SourceEntry
+from xerago_intelligence.db.repositories.rss_source_repository import RssSourceRepository
+from xerago_intelligence.ingest import scheduler_state
+from xerago_intelligence.ingest.intelligence_refresh import IntelligenceRefreshService
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_INTERVAL_SECONDS = 15 * 60
 
 
 @dataclass(frozen=True)
@@ -25,26 +23,31 @@ class ScheduledSource:
 
 
 class IngestionScheduler:
-    """Runs ingestion and enrichment pipeline every fixed interval."""
+    """Polls active RSS sources every 15 minutes and runs the intelligence pipeline."""
 
-    def __init__(self, *, interval_seconds: int = 15 * 60) -> None:
+    def __init__(self, *, interval_seconds: int = DEFAULT_INTERVAL_SECONDS) -> None:
         self._interval_seconds = max(1, int(interval_seconds))
         self._stop_event = threading.Event()
         self._wake_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._run_lock = threading.Lock()
 
+    @property
+    def interval_seconds(self) -> int:
+        return self._interval_seconds
+
     def start(self) -> None:
         if self._thread is not None and self._thread.is_alive():
             return
+        scheduler_state.register_scheduler(self)
         self._thread = threading.Thread(
             target=self._run_loop,
-            name="ingestion-scheduler",
+            name="intelligence-refresh-scheduler",
             daemon=True,
         )
         self._thread.start()
         logger.info(
-            "Ingestion scheduler started (interval=%ss)",
+            "Intelligence refresh scheduler started (interval=%ss)",
             self._interval_seconds,
         )
 
@@ -53,16 +56,24 @@ class IngestionScheduler:
         self._wake_event.set()
         if self._thread is not None:
             self._thread.join(timeout=timeout_seconds)
-        logger.info("Ingestion scheduler stopped")
+        logger.info("Intelligence refresh scheduler stopped")
 
     def trigger_now(self) -> None:
+        """Request an immediate refresh cycle."""
         self._wake_event.set()
 
     def _run_loop(self) -> None:
-        # Run one cycle immediately on startup.
+        logger.info(
+            "Scheduler loop active (thread=%s interval=%ss)",
+            threading.current_thread().name,
+            self._interval_seconds,
+        )
         self._run_once()
-
         while not self._stop_event.is_set():
+            logger.info(
+                "Scheduler tick: waiting up to %ss for next cycle",
+                self._interval_seconds,
+            )
             self._wake_event.wait(timeout=self._interval_seconds)
             self._wake_event.clear()
             if self._stop_event.is_set():
@@ -71,80 +82,37 @@ class IngestionScheduler:
 
     def _run_once(self) -> None:
         if not self._run_lock.acquire(blocking=False):
-            logger.warning("Skipping scheduler cycle; previous cycle still running")
+            logger.warning("Skipping refresh cycle; previous cycle still running")
             return
-        try:
-            sources = _load_rss_sources()
-            if not sources:
-                logger.info("Scheduler cycle: no enabled RSS sources found")
-                return
-            logger.info("Scheduler cycle started for %s RSS sources", len(sources))
-            for source in sources:
-                self._run_source(source)
-            logger.info("Scheduler cycle completed")
-        except Exception:
-            logger.exception("Scheduler cycle failed")
-        finally:
-            self._run_lock.release()
-
-    def _run_source(self, source: ScheduledSource) -> None:
-        cycle_started_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        scheduler_state.mark_cycle_started()
+        logger.info("Scheduler cycle start")
         try:
             with session_scope() as session:
-                ingestion = RssIngestionService(session)
-                try:
-                    result = ingestion.ingest_feed(source.feed_url, source.source_id)
-                finally:
-                    ingestion.close()
+                repo = RssSourceRepository(session)
+                if repo.count_all() == 0:
+                    logger.info("RSS registry empty — seeding Phase 8 catalog")
+                    repo.seed_phase8_catalog()
+                    session.commit()
 
-                if result.inserted == 0:
-                    logger.info(
-                        "Source %s: no new artifacts (fetched=%s skipped=%s)",
-                        source.source_id,
-                        result.fetched,
-                        result.skipped,
+                service = IntelligenceRefreshService(session)
+                cycle = service.run_cycle()
+                if cycle.fatal_error:
+                    logger.error(
+                        "Scheduler cycle recorded failure in intelligence_runs: %s",
+                        cycle.fatal_error,
                     )
-                    return
-
-                artifacts = ArtifactRepository(session).list_ingested_since(
-                    source_id=source.source_id,
-                    ingested_since=cycle_started_at,
-                )
-                enrich_service = ArtifactEnrichmentService(session)
-                enriched_count = 0
-                for artifact in artifacts:
-                    # Score persistence happens inside enrich_artifact().
-                    enrich_service.enrich_artifact(artifact.artifact_id, force=False)
-                    enriched_count += 1
-
-                logger.info(
-                    "Source %s: inserted=%s enriched=%s",
-                    source.source_id,
-                    result.inserted,
-                    enriched_count,
-                )
+                else:
+                    logger.info(
+                        "Scheduler cycle committed run status=%s sources_polled=%s "
+                        "articles_ingested=%s articles_enriched=%s",
+                        cycle.status,
+                        cycle.metrics.sources_polled,
+                        cycle.metrics.articles_inserted,
+                        cycle.metrics.articles_enriched,
+                    )
         except Exception:
-            logger.exception("Source %s failed during scheduled processing", source.source_id)
-
-
-def _load_rss_sources() -> list[ScheduledSource]:
-    registry = load_sources_registry()
-    selected: list[ScheduledSource] = []
-    for source in registry.sources:
-        if _is_enabled_rss_source(source):
-            assert source.feed_url is not None
-            selected.append(
-                ScheduledSource(
-                    source_id=source.source_id,
-                    feed_url=source.feed_url,
-                )
-            )
-    return selected
-
-
-def _is_enabled_rss_source(source: SourceEntry) -> bool:
-    return (
-        source.enabled
-        and source.ingestion_method == "pull_rss"
-        and bool(source.feed_url)
-    )
+            logger.exception("Scheduler cycle aborted before intelligence_runs commit")
+        finally:
+            scheduler_state.mark_cycle_completed()
+            logger.info("Scheduler cycle end")
+            self._run_lock.release()

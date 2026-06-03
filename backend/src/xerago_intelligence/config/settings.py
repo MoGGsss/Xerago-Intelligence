@@ -54,6 +54,11 @@ class Settings(BaseSettings):
         default=15,
         alias="INGEST_SCHEDULER_INTERVAL_MINUTES",
     )
+    negative_filter_enabled: bool = Field(default=True, alias="NEGATIVE_FILTER_ENABLED")
+    negative_score_skip_threshold: int = Field(
+        default=5,
+        alias="NEGATIVE_SCORE_SKIP_THRESHOLD",
+    )
 
     # Repository root (contains registry/sources.yaml)
     project_root: Path | None = Field(default=None, alias="PROJECT_ROOT")

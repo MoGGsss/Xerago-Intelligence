@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from xerago_intelligence.api.dependencies import get_db
 from xerago_intelligence.api.schemas.intelligence import (
+    DepartmentMappingItem,
+    DepartmentRegistryItem,
     IntelligenceItem,
     IntelligenceListResponse,
 )
@@ -14,9 +16,18 @@ from xerago_intelligence.db.repositories.intelligence_query_repository import (
     IntelligenceListFilters,
     IntelligenceQueryRepository,
 )
+from xerago_intelligence.taxonomy.departments import DEPARTMENTS
 from xerago_intelligence.types.intelligence import IntelligenceRecord
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
+
+
+@router.get("/departments", response_model=list[DepartmentRegistryItem])
+def list_departments() -> list[DepartmentRegistryItem]:
+    return [
+        DepartmentRegistryItem(slug=dept.slug, display_name=dept.display_name)
+        for dept in DEPARTMENTS
+    ]
 
 
 def _to_item(record: IntelligenceRecord) -> IntelligenceItem:
@@ -33,6 +44,19 @@ def _to_item(record: IntelligenceRecord) -> IntelligenceItem:
         validation_status=record.validation_status,
         strategic_score=record.strategic_score,
         priority_level=record.priority_level,
+        departments=[
+            DepartmentMappingItem(
+                department_name=item.department_name,
+                department_relevance_score=item.department_relevance_score,
+                impact_summary=item.impact_summary,
+                impact_category=item.impact_category,
+                opportunity_type=item.opportunity_type,
+                department_opportunity_score=item.department_opportunity_score,
+                impact_reason=item.impact_reason,
+                impact_version=item.impact_version,
+            )
+            for item in record.departments
+        ],
         department=record.department,
     )
 
@@ -43,6 +67,7 @@ def list_intelligence(
     page_size: int = Query(20, ge=1, le=100),
     domain: str | None = Query(None),
     priority: str | None = Query(None),
+    department: str | None = Query(None),
     q: str | None = Query(None),
     db: Session = Depends(get_db),
 ) -> IntelligenceListResponse:
@@ -53,6 +78,7 @@ def list_intelligence(
             page_size=page_size,
             domain=domain,
             priority=priority,
+            department=department,
             query=q,
         )
     )
@@ -133,6 +159,29 @@ def search_intelligence(
             page=page,
             page_size=page_size,
             query=q,
+        )
+    )
+    return IntelligenceListResponse(
+        items=[_to_item(item) for item in result.items],
+        page=result.page,
+        page_size=result.page_size,
+        total=result.total,
+    )
+
+
+@router.get("/department/{department_name}", response_model=IntelligenceListResponse)
+def list_intelligence_by_department(
+    department_name: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> IntelligenceListResponse:
+    repo = IntelligenceQueryRepository(db)
+    result = repo.list_intelligence(
+        IntelligenceListFilters(
+            page=page,
+            page_size=page_size,
+            department=department_name,
         )
     )
     return IntelligenceListResponse(

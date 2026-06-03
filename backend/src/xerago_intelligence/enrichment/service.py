@@ -20,6 +20,8 @@ from xerago_intelligence.db.repositories.artifact_repository import ArtifactRepo
 from xerago_intelligence.db.repositories.enrichment_repository import EnrichmentRepository
 from xerago_intelligence.enrichment.parse import EnrichmentParseError, parse_enrichment_json
 from xerago_intelligence.enrichment.prompts import PROMPT_VERSION, build_enrichment_prompt
+from xerago_intelligence.filtering import EnrichmentSkippedError, NegativeFilterService
+from xerago_intelligence.mapping.department_service import DepartmentMappingService
 from xerago_intelligence.scoring import ScoreInput, StrategicScorer
 from xerago_intelligence.types.enrichment import EnrichmentPayload
 
@@ -70,6 +72,8 @@ class ArtifactEnrichmentService:
         self._ai = ai_client or create_ai_client()
         self._validator = validator or ClassificationValidator()
         self._scorer = StrategicScorer()
+        self._department_mapper = DepartmentMappingService(session)
+        self._negative_filter = NegativeFilterService(session)
 
     def classify(
         self,
@@ -123,6 +127,7 @@ class ArtifactEnrichmentService:
                 )
                 existing = self._enrichments.get_by_artifact_id(artifact_id)
             assert existing is not None
+            self._department_mapper.map_artifact(artifact_id, force=False)
             return EnrichmentServiceResult(
                 artifact_id=artifact_id,
                 payload=EnrichmentPayload(
@@ -137,6 +142,13 @@ class ArtifactEnrichmentService:
                 validation_status=existing.validation_status,
                 classification_reason=existing.classification_reason or "",
             )
+
+        filter_result = self._negative_filter.evaluate_and_persist(
+            artifact_id,
+            force=force,
+        )
+        if filter_result.should_skip:
+            raise EnrichmentSkippedError(artifact_id, filter_result)
 
         prompt = build_enrichment_prompt(
             title=artifact.title,
@@ -207,6 +219,8 @@ class ArtifactEnrichmentService:
             score_result.strategic_score,
             score_result.priority_level,
         )
+
+        self._department_mapper.map_artifact(artifact_id, force=True)
 
         return EnrichmentServiceResult(
             artifact_id=artifact_id,

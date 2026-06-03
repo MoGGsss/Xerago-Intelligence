@@ -1,19 +1,31 @@
-"""Centralized mapping from intelligence domain to business department."""
+"""Centralized department intelligence mapping (re-exports)."""
 
-from __future__ import annotations
+from xerago_intelligence.taxonomy.department_mapper import (
+    DepartmentMapper,
+    DepartmentMappingInput,
+    DepartmentMappingRecord,
+    DepartmentMappingResult,
+    DepartmentScore,
+    department_for_domain,
+    primary_department,
+)
+from xerago_intelligence.taxonomy.department_rules import DEPARTMENT_MAPPING_VERSION
+from xerago_intelligence.taxonomy.departments import (
+    DEPARTMENTS,
+    DEPARTMENT_NAMES,
+    is_valid_department,
+)
 
-DOMAIN_TO_DEPARTMENT: dict[str, str] = {
-    "enterprise-ai": "AI",
-    "ai-ml": "AI",
-    "research-signals": "Leadership",
-    "cloud-platforms": "Cloud",
-    "martech": "Marketing",
-    "marketing-technology": "Marketing",
-    "analytics": "Analytics",
-}
-
-
-def department_for_domain(domain: str | None) -> str | None:
-    if not domain:
-        return None
-    return DOMAIN_TO_DEPARTMENT.get(domain.strip().lower())
+__all__ = [
+    "DEPARTMENTS",
+    "DEPARTMENT_MAPPING_VERSION",
+    "DEPARTMENT_NAMES",
+    "DepartmentMapper",
+    "DepartmentMappingInput",
+    "DepartmentMappingRecord",
+    "DepartmentMappingResult",
+    "DepartmentScore",
+    "department_for_domain",
+    "is_valid_department",
+    "primary_department",
+]

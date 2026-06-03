@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -9,11 +10,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from xerago_intelligence.api.dependencies import get_db
-from xerago_intelligence.api.routers import intelligence
+from xerago_intelligence.api.routers import (
+    analytics,
+    feedback,
+    intelligence,
+    sources,
+    system,
+)
 from xerago_intelligence.api.schemas.intelligence import HealthResponse
 from xerago_intelligence.config import get_settings
 from xerago_intelligence.db.connection import probe_connection
 from xerago_intelligence.ingest.scheduler import IngestionScheduler
+
+logger = logging.getLogger(__name__)
 
 _scheduler: IngestionScheduler | None = None
 
@@ -23,10 +32,14 @@ async def lifespan(app: FastAPI):
     del app
     global _scheduler
     settings = get_settings()
-    _scheduler = IngestionScheduler(
-        interval_seconds=settings.ingest_scheduler_interval_minutes * 60
-    )
+    interval_seconds = settings.ingest_scheduler_interval_minutes * 60
+    _scheduler = IngestionScheduler(interval_seconds=interval_seconds)
     _scheduler.start()
+    logger.info(
+        "API startup: intelligence refresh scheduler started "
+        "(interval=%ss thread=intelligence-refresh-scheduler)",
+        interval_seconds,
+    )
     try:
         yield
     finally:
@@ -53,6 +66,10 @@ app.add_middleware(
 )
 
 app.include_router(intelligence.router, prefix="/v1")
+app.include_router(feedback.router, prefix="/v1")
+app.include_router(sources.router, prefix="/v1")
+app.include_router(system.router, prefix="/v1")
+app.include_router(analytics.router, prefix="/v1")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])

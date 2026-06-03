@@ -180,6 +180,13 @@ entities:
     default_domains: [industry-trends]
     product_tags: []
 
+  - slug: mit-tech-review-ai
+    display_name: MIT Technology Review AI
+    group: industry
+    priority: P4
+    default_domains: [industry-trends, enterprise-ai, research-signals]
+    product_tags: []
+
   - slug: tldr-ai
     display_name: TLDR AI
     group: industry
@@ -247,6 +254,7 @@ sources:
     entity: salesforce
     source_type: blog
     base_url: https://www.salesforce.com/blog
+    feed_url: https://www.salesforce.com/blog/feed/
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -336,6 +344,7 @@ sources:
     entity: ibm
     source_type: blog
     base_url: https://research.ibm.com/blog
+    feed_url: https://research.ibm.com/blog/feed
     ingestion_method: pull_rss
     refresh_cadence: PT24H
     trust_tier: T1
@@ -361,6 +370,7 @@ sources:
     entity: sas
     source_type: blog
     base_url: https://blogs.sas.com
+    feed_url: https://blogs.sas.com/content/feed/?x=1
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -387,6 +397,7 @@ sources:
     entity: acquia
     source_type: blog
     base_url: https://www.acquia.com/blog
+    feed_url: https://www.acquia.com/blog/feed
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -425,6 +436,7 @@ sources:
     entity: acoustic
     source_type: blog
     base_url: https://acoustic.com/blog
+    feed_url: https://acoustic.com/blog/feed
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -463,6 +475,7 @@ sources:
     entity: hcl
     source_type: press
     base_url: https://www.hcltech.com/newsroom
+    feed_url: https://www.hcltech.com/rss.xml
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -526,7 +539,8 @@ sources:
     name: OpenAI Blog and News
     entity: openai
     source_type: blog
-    base_url: https://openai.com/blog
+    base_url: https://openai.com/news
+    feed_url: https://openai.com/news/rss.xml
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T1
@@ -565,6 +579,7 @@ sources:
     entity: google-ai
     source_type: blog
     base_url: https://blog.google/technology/ai
+    feed_url: https://blog.google/technology/ai/rss/
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T1
@@ -604,6 +619,7 @@ sources:
     entity: microsoft-ai
     source_type: blog
     base_url: https://blogs.microsoft.com/ai
+    feed_url: https://blogs.microsoft.com/ai/feed/
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T1
@@ -643,6 +659,7 @@ sources:
     entity: anthropic
     source_type: press
     base_url: https://www.anthropic.com/news
+    feed_url: https://www.anthropic.com/rss.xml
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T1
@@ -681,6 +698,7 @@ sources:
     entity: huggingface
     source_type: blog
     base_url: https://huggingface.co/blog
+    feed_url: https://huggingface.co/blog/feed.xml
     ingestion_method: pull_rss
     refresh_cadence: PT4H
     trust_tier: T1
@@ -733,6 +751,7 @@ sources:
     entity: stanford-ai
     source_type: blog
     base_url: https://hai.stanford.edu
+    feed_url: https://hai.stanford.edu/news/rss.xml
     ingestion_method: pull_rss
     refresh_cadence: PT24H
     trust_tier: T1
@@ -772,7 +791,8 @@ sources:
     entity: papers-with-code
     source_type: api
     base_url: https://paperswithcode.com
-    ingestion_method: pull_api
+    feed_url: https://paperswithcode.com/latest/rss.xml
+    ingestion_method: pull_rss
     refresh_cadence: PT6H
     trust_tier: T2
     priority: P3
@@ -812,6 +832,7 @@ sources:
     entity: techcrunch-ai
     source_type: rss
     base_url: https://techcrunch.com/category/artificial-intelligence
+    feed_url: https://techcrunch.com/category/artificial-intelligence/feed/
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T2
@@ -828,6 +849,7 @@ sources:
     entity: verge-ai
     source_type: rss
     base_url: https://www.theverge.com/ai-artificial-intelligence
+    feed_url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
     ingestion_method: pull_rss
     refresh_cadence: PT2H
     trust_tier: T2
@@ -840,9 +862,23 @@ sources:
     entity: tldr-ai
     source_type: newsletter
     base_url: https://tldr.tech/ai
-    ingestion_method: email_parse
+    feed_url: https://tldr.tech/ai/rss.xml
+    ingestion_method: pull_rss
     refresh_cadence: PT24H
     trust_tier: T2
     priority: P4
     enabled: true
     mvp_wave: 2
+
+  - source_id: mit-tech-review-ai
+    name: MIT Technology Review AI
+    entity: mit-tech-review-ai
+    source_type: rss
+    base_url: https://www.technologyreview.com/topic/artificial-intelligence
+    feed_url: https://www.technologyreview.com/topic/artificial-intelligence/feed/
+    ingestion_method: pull_rss
+    refresh_cadence: PT4H
+    trust_tier: T2
+    priority: P4
+    enabled: true
+    mvp_wave: 3

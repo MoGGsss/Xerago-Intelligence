@@ -8,9 +8,19 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from xerago_intelligence.db.models.artifact import Artifact
+from xerago_intelligence.db.models.artifact_department_mapping import (
+    ArtifactDepartmentMapping,
+)
 from xerago_intelligence.db.models.artifact_enrichment import ArtifactEnrichment
+from xerago_intelligence.db.repositories.department_mapping_repository import (
+    DepartmentMappingRepository,
+)
 from xerago_intelligence.taxonomy import department_for_domain
-from xerago_intelligence.types.intelligence import IntelligencePage, IntelligenceRecord
+from xerago_intelligence.types.intelligence import (
+    DepartmentMappingItem,
+    IntelligencePage,
+    IntelligenceRecord,
+)
 
 
 @dataclass(frozen=True)
@@ -19,6 +29,7 @@ class IntelligenceListFilters:
     page_size: int = 20
     domain: str | None = None
     priority: str | None = None
+    department: str | None = None
     query: str | None = None
 
 
@@ -27,13 +38,15 @@ class IntelligenceQueryRepository:
 
     def __init__(self, session: Session) -> None:
         self._session = session
+        self._department_mappings = DepartmentMappingRepository(session)
 
     def get_by_artifact_id(self, artifact_id: str) -> IntelligenceRecord | None:
         stmt = self._base_select().where(Artifact.artifact_id == artifact_id)
         row = self._session.execute(stmt).first()
         if row is None:
             return None
-        return self._to_record(row[0], row[1])
+        mapping_rows = self._department_mappings.get_by_artifact_id(artifact_id)
+        return self._to_record(row[0], row[1], mapping_rows)
 
     def list_intelligence(
         self,
@@ -56,11 +69,24 @@ class IntelligenceQueryRepository:
                 func.upper(ArtifactEnrichment.priority_level)
                 == filters.priority.strip().upper()
             )
+        if filters.department:
+            count_stmt = count_stmt.join(
+                ArtifactDepartmentMapping,
+                Artifact.artifact_id == ArtifactDepartmentMapping.artifact_id,
+            ).where(
+                ArtifactDepartmentMapping.department_name
+                == filters.department.strip()
+            )
         if filters.query:
             count_stmt = count_stmt.where(self._search_predicate(filters.query))
         total = int(self._session.scalar(count_stmt) or 0)
 
-        base = self._filtered_select(filters.domain, filters.priority, filters.query)
+        base = self._filtered_select(
+            filters.domain,
+            filters.priority,
+            filters.department,
+            filters.query,
+        )
 
         stmt = (
             base.order_by(
@@ -71,7 +97,18 @@ class IntelligenceQueryRepository:
             .limit(page_size)
         )
         rows = self._session.execute(stmt).all()
-        items = [self._to_record(artifact, enrichment) for artifact, enrichment in rows]
+        artifact_ids = [artifact.artifact_id for artifact, _ in rows]
+        mappings_by_artifact = self._department_mappings.get_mappings_by_artifact_ids(
+            artifact_ids
+        )
+        items = [
+            self._to_record(
+                artifact,
+                enrichment,
+                mappings_by_artifact.get(artifact.artifact_id, []),
+            )
+            for artifact, enrichment in rows
+        ]
 
         return IntelligencePage(
             items=items,
@@ -92,7 +129,18 @@ class IntelligenceQueryRepository:
             .limit(limit)
         )
         rows = self._session.execute(stmt).all()
-        return [self._to_record(artifact, enrichment) for artifact, enrichment in rows]
+        artifact_ids = [artifact.artifact_id for artifact, _ in rows]
+        mappings_by_artifact = self._department_mappings.get_mappings_by_artifact_ids(
+            artifact_ids
+        )
+        return [
+            self._to_record(
+                artifact,
+                enrichment,
+                mappings_by_artifact.get(artifact.artifact_id, []),
+            )
+            for artifact, enrichment in rows
+        ]
 
     def _base_select(self) -> Select:
         return select(Artifact, ArtifactEnrichment).join(
@@ -104,6 +152,7 @@ class IntelligenceQueryRepository:
         self,
         domain: str | None,
         priority: str | None,
+        department: str | None,
         query: str | None,
     ) -> Select:
         stmt = self._base_select()
@@ -112,6 +161,13 @@ class IntelligenceQueryRepository:
         if priority:
             stmt = stmt.where(
                 func.upper(ArtifactEnrichment.priority_level) == priority.strip().upper()
+            )
+        if department:
+            stmt = stmt.join(
+                ArtifactDepartmentMapping,
+                Artifact.artifact_id == ArtifactDepartmentMapping.artifact_id,
+            ).where(
+                ArtifactDepartmentMapping.department_name == department.strip()
             )
         if query:
             stmt = stmt.where(self._search_predicate(query))
@@ -130,10 +186,31 @@ class IntelligenceQueryRepository:
         )
 
     @staticmethod
+    def _department_item_from_row(row: ArtifactDepartmentMapping) -> DepartmentMappingItem:
+        return DepartmentMappingItem(
+            department_name=row.department_name,
+            department_relevance_score=row.department_relevance_score,
+            impact_summary=row.impact_summary,
+            impact_category=row.impact_category,
+            opportunity_type=row.opportunity_type,
+            department_opportunity_score=row.department_opportunity_score,
+            impact_reason=row.impact_reason,
+            impact_version=row.impact_version,
+        )
+
+    @classmethod
     def _to_record(
+        cls,
         artifact: Artifact,
         enrichment: ArtifactEnrichment,
+        mapping_rows: list[ArtifactDepartmentMapping] | None = None,
     ) -> IntelligenceRecord:
+        departments = tuple(
+            cls._department_item_from_row(row) for row in (mapping_rows or [])
+        )
+        primary = departments[0].department_name if departments else department_for_domain(
+            enrichment.domain
+        )
         return IntelligenceRecord(
             artifact_id=artifact.artifact_id,
             title=artifact.title,
@@ -147,5 +224,6 @@ class IntelligenceQueryRepository:
             validation_status=enrichment.validation_status,
             strategic_score=enrichment.strategic_score,
             priority_level=enrichment.priority_level,
-            department=department_for_domain(enrichment.domain),
+            departments=departments,
+            department=primary,
         )

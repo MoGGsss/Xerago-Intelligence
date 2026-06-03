@@ -4,28 +4,17 @@ import IntelligenceDetailPanel from './IntelligenceDetailPanel'
 import DashboardMetrics from './DashboardMetrics'
 import { AlertCircle, ArrowUpRight, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { getLoggedInDepartment, getLoggedInEmail } from '../../auth/demoAuth'
 import { useIntelligence } from '../../hooks/useIntelligence'
+import { useSystemStatus } from '../../hooks/useSystemStatus'
 import type { IntelligenceItem, PriorityLevel } from '../../types/intelligence'
 import SectionHeader from './SectionHeader'
-import {
-  DEPARTMENT_TABS,
-  filterIntelligenceByTab,
-  getDepartmentViewForEmail,
-  type DepartmentTab,
-  type DepartmentTabId,
-} from '../../utils/departmentFilters'
+import { getDepartmentImpact, getDepartmentView } from '../../utils/departmentFilters'
 import { computeIntelligenceHeaderStats } from '../../utils/intelligenceStats'
 
 const cardIcons: LucideIcon[] = [Sparkles, ArrowUpRight, AlertCircle]
 type SortOption = 'strategic_score' | 'newest' | 'oldest'
-const DEFAULT_VISIBLE_ARTICLES = 3
-const DEPARTMENT_SECTION_IDS: readonly DepartmentTabId[] = [
-  'ai',
-  'cloud',
-  'marketing',
-  'analytics',
-  'leadership',
-]
+const DEFAULT_VISIBLE_ARTICLES = 6
 
 interface AIInActionTodayProps {
   onLogout?: () => void
@@ -60,29 +49,19 @@ function IntelligenceSkeletonCard() {
 
 export default function AIInActionToday({ onLogout }: AIInActionTodayProps) {
   const { data, loading, error } = useIntelligence()
-  const userEmail = localStorage.getItem('userEmail')
-  const lastLoginAt = localStorage.getItem('lastLoginAt')
-  const departmentView = useMemo(() => getDepartmentViewForEmail(userEmail), [userEmail])
+  const { data: systemStatus, loading: systemStatusLoading } = useSystemStatus()
+  const loggedInDepartment = getLoggedInDepartment()
+  const userEmail = getLoggedInEmail()
+  const departmentView = useMemo(
+    () => getDepartmentView(loggedInDepartment),
+    [loggedInDepartment],
+  )
   const [selectedItem, setSelectedItem] = useState<IntelligenceItem | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<'ALL' | PriorityLevel>('ALL')
   const [domainFilter, setDomainFilter] = useState<string>('ALL')
   const [sortBy, setSortBy] = useState<SortOption>('strategic_score')
-  const [expandedSections, setExpandedSections] = useState<
-    Partial<Record<DepartmentTabId, boolean>>
-  >({})
-
-  const visibleDepartmentSections = useMemo(
-    () =>
-      DEPARTMENT_SECTION_IDS.flatMap((id) => {
-        if (!departmentView.allowedTabs.includes(id)) {
-          return []
-        }
-        const tab = DEPARTMENT_TABS.find((candidate) => candidate.id === id)
-        return tab ? [tab] : []
-      }),
-    [departmentView],
-  )
+  const [showAll, setShowAll] = useState(false)
 
   const headerStats = useMemo(
     () => computeIntelligenceHeaderStats(data),
@@ -99,8 +78,8 @@ export default function AIInActionToday({ onLogout }: AIInActionTodayProps) {
     return ['ALL', ...Array.from(domains).sort()]
   }, [data])
 
-  const getFilteredAndSortedItems = (items: IntelligenceItem[], tab: DepartmentTab): IntelligenceItem[] => {
-    const searched = filterIntelligenceByTab(items, tab).filter((item) => {
+  const filteredItems = useMemo(() => {
+    const searched = data.filter((item) => {
       const q = searchQuery.trim().toLowerCase()
       if (!q) {
         return true
@@ -120,7 +99,7 @@ export default function AIInActionToday({ onLogout }: AIInActionTodayProps) {
         ? priorityFiltered
         : priorityFiltered.filter((item) => item.domain === domainFilter)
 
-    const sorted = [...domainFiltered].sort((a, b) => {
+    return [...domainFiltered].sort((a, b) => {
       if (sortBy === 'strategic_score') {
         return (b.strategic_score ?? -1) - (a.strategic_score ?? -1)
       }
@@ -131,58 +110,42 @@ export default function AIInActionToday({ onLogout }: AIInActionTodayProps) {
       }
       return at - bt
     })
+  }, [data, searchQuery, priorityFilter, domainFilter, sortBy])
 
-    return sorted
-  }
+  const visibleItems = showAll
+    ? filteredItems
+    : filteredItems.slice(0, DEFAULT_VISIBLE_ARTICLES)
 
-  const sectionData = useMemo(
-    () =>
-      visibleDepartmentSections.map((tab) => {
-        const allItems = getFilteredAndSortedItems(data, tab)
-        const isExpanded = Boolean(expandedSections[tab.id])
-        const criticalCount = allItems.filter(
-          (item) => item.priority_level === 'CRITICAL',
-        ).length
-        const highCount = allItems.filter((item) => item.priority_level === 'HIGH').length
-        const mediumCount = allItems.filter(
-          (item) => item.priority_level === 'MEDIUM',
-        ).length
-        return {
-          tab,
-          allItems,
-          isExpanded,
-          criticalCount,
-          highCount,
-          mediumCount,
-        }
-      }),
-    [data, visibleDepartmentSections, searchQuery, priorityFilter, domainFilter, sortBy, expandedSections],
-  )
-
-  const toggleSection = (tabId: DepartmentTabId) => {
-    setExpandedSections((current) => ({
-      ...current,
-      [tabId]: !current[tabId],
-    }))
-  }
+  const criticalCount = filteredItems.filter(
+    (item) => item.priority_level === 'CRITICAL',
+  ).length
+  const highCount = filteredItems.filter((item) => item.priority_level === 'HIGH').length
+  const mediumCount = filteredItems.filter(
+    (item) => item.priority_level === 'MEDIUM',
+  ).length
 
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm md:p-10">
-      <SectionHeader
-        title="Xerago Intelligence Center"
-        subtitle="AI-powered strategic signals for enterprise teams"
-        stats={!error ? headerStats : undefined}
-        loading={loading}
-        userEmail={userEmail ?? undefined}
-        department={departmentView.departmentLabel}
-        lastLoginAt={lastLoginAt}
-        onLogout={onLogout}
-      />
+    <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8 lg:px-12 xl:px-16">
+      <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm md:p-8 lg:p-10">
+        <SectionHeader
+          title="Intelligence Center"
+          subtitle={`Strategic signals curated for ${departmentView.departmentLabel}`}
+          dataLastUpdated={!loading && !error ? headerStats.lastUpdated : undefined}
+          systemStatus={systemStatus}
+          systemStatusLoading={systemStatusLoading}
+          userEmail={userEmail ?? undefined}
+          department={departmentView.departmentLabel}
+          onLogout={onLogout}
+        />
 
-      {!error ? <DashboardMetrics stats={headerStats} loading={loading} /> : null}
+        {!error ? (
+          <div className="mt-6">
+            <DashboardMetrics stats={headerStats} loading={loading} />
+          </div>
+        ) : null}
 
-      {!loading && !error ? (
-        <section className="mb-6 rounded-2xl border border-slate-200/90 bg-slate-50/60 p-4 md:p-5">
+        {!loading && !error ? (
+        <section className="mt-6 rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 md:p-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -239,138 +202,98 @@ export default function AIInActionToday({ onLogout }: AIInActionTodayProps) {
                 onChange={(event) => setSortBy(event.target.value as SortOption)}
                 className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-emerald-300"
               >
-                <option value="strategic_score">Strategic Score</option>
+                <option value="strategic_score">Department relevance</option>
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
               </select>
             </label>
           </div>
         </section>
-      ) : null}
+        ) : null}
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-5 transition-opacity duration-300 ease-out md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:auto-rows-fr animate-in fade-in">
+        {loading ? (
+        <div className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-6 transition-opacity duration-300 ease-out md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:auto-rows-fr animate-in fade-in">
           {Array.from({ length: 3 }).map((_, index) => (
             <IntelligenceSkeletonCard key={`skeleton-${index}`} />
           ))}
         </div>
-      ) : null}
+        ) : null}
 
-      {!loading && error ? (
-        <article className="flex min-h-[200px] items-center justify-center rounded-2xl border border-rose-100 bg-rose-50/50 p-8 text-center text-base font-medium text-rose-800">
+        {!loading && error ? (
+        <article className="mt-6 flex min-h-[200px] items-center justify-center rounded-xl border border-rose-100 bg-rose-50/50 p-8 text-center text-base font-medium text-rose-800">
           Unable to load intelligence insights. Please try again later.
         </article>
-      ) : null}
+        ) : null}
 
-      {!loading && !error ? (
-        <div className="space-y-8">
-          {sectionData.map(
-            ({
-              tab,
-              allItems,
-              isExpanded,
-              criticalCount,
-              highCount,
-              mediumCount,
-            }) => (
-              <section
-                key={tab.id}
-                className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm md:p-5"
+        {!loading && !error ? (
+        <section className="mt-8 border-t border-slate-100 pt-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+                {departmentView.departmentLabel} Feed ({filteredItems.length} articles)
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <span className="rounded-md bg-rose-50 px-2 py-1 text-rose-700">
+                  Critical: {criticalCount}
+                </span>
+                <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-700">
+                  High: {highCount}
+                </span>
+                <span className="rounded-md bg-sky-50 px-2 py-1 text-sky-700">
+                  Medium: {mediumCount}
+                </span>
+              </div>
+            </div>
+            {filteredItems.length > DEFAULT_VISIBLE_ARTICLES ? (
+              <button
+                type="button"
+                onClick={() => setShowAll((current) => !current)}
+                className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
               >
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                      {tab.label} Department ({allItems.length} Articles)
-                    </h2>
-                    {isExpanded ? (
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                        <span className="rounded-md bg-rose-50 px-2 py-1 text-rose-700">
-                          Critical: {criticalCount}
-                        </span>
-                        <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-700">
-                          High: {highCount}
-                        </span>
-                        <span className="rounded-md bg-sky-50 px-2 py-1 text-sky-700">
-                          Medium: {mediumCount}
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-                  {allItems.length > DEFAULT_VISIBLE_ARTICLES ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(tab.id)}
-                      className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                      {isExpanded ? 'Collapse' : 'View More'}
-                    </button>
-                  ) : null}
-                </div>
+                {showAll ? 'Show less' : 'View all'}
+              </button>
+            ) : null}
+          </div>
 
-                {allItems.length === 0 ? (
-                  <article className="flex min-h-[140px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-base font-medium text-slate-600">
-                    No intelligence signals in this department yet.
-                  </article>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:auto-rows-fr">
-                      {allItems.slice(0, DEFAULT_VISIBLE_ARTICLES).map((card, index) => (
-                        <IntelligenceCard
-                          key={card.artifact_id}
-                          title={card.title}
-                          description={card.summary}
-                          whyItMatters={card.why_it_matters}
-                          priorityLevel={card.priority_level}
-                          strategicScore={card.strategic_score}
-                          publishedAt={card.published_at}
-                          domain={card.domain}
-                          url={card.url}
-                          icon={cardIcons[index % cardIcons.length]}
-                          onSelect={() => setSelectedItem(card)}
-                        />
-                      ))}
-                    </div>
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ease-out ${
-                        isExpanded ? 'mt-5 max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-                      }`}
-                    >
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:auto-rows-fr">
-                        {allItems
-                          .slice(DEFAULT_VISIBLE_ARTICLES)
-                          .map((card, index) => (
-                            <IntelligenceCard
-                              key={card.artifact_id}
-                              title={card.title}
-                              description={card.summary}
-                              whyItMatters={card.why_it_matters}
-                              priorityLevel={card.priority_level}
-                              strategicScore={card.strategic_score}
-                              publishedAt={card.published_at}
-                              domain={card.domain}
-                              url={card.url}
-                              icon={
-                                cardIcons[
-                                  (index + DEFAULT_VISIBLE_ARTICLES) % cardIcons.length
-                                ]
-                              }
-                              onSelect={() => setSelectedItem(card)}
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </section>
-            ),
+          {filteredItems.length === 0 ? (
+            <article className="flex min-h-[140px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-base font-medium text-slate-600">
+              No intelligence signals mapped to {departmentView.departmentLabel} yet.
+            </article>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:auto-rows-fr">
+              {visibleItems.map((card, index) => (
+                <IntelligenceCard
+                  key={card.artifact_id}
+                  artifactId={card.artifact_id}
+                  feedbackDepartmentName={loggedInDepartment}
+                  title={card.title}
+                  description={card.summary}
+                  whyItMatters={card.why_it_matters}
+                  priorityLevel={card.priority_level}
+                  strategicScore={card.strategic_score}
+                  publishedAt={card.published_at}
+                  domain={card.domain}
+                  url={card.url}
+                  icon={cardIcons[index % cardIcons.length]}
+                  departmentImpact={
+                    departmentView.primaryDepartment
+                      ? getDepartmentImpact(card, departmentView.primaryDepartment)
+                      : null
+                  }
+                  departmentLabel={departmentView.departmentLabel}
+                  onSelect={() => setSelectedItem(card)}
+                />
+              ))}
+            </div>
           )}
-        </div>
-      ) : null}
+        </section>
+        ) : null}
+      </section>
       <IntelligenceDetailPanel
         item={selectedItem}
         open={selectedItem !== null}
         onClose={() => setSelectedItem(null)}
       />
-    </section>
+    </div>
   )
 }

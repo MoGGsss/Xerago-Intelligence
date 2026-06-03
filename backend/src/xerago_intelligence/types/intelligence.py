@@ -7,6 +7,18 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
+class DepartmentMappingItem:
+    department_name: str
+    department_relevance_score: int
+    impact_summary: str | None = None
+    impact_category: str | None = None
+    opportunity_type: str | None = None
+    department_opportunity_score: int | None = None
+    impact_reason: str | None = None
+    impact_version: str | None = None
+
+
+@dataclass(frozen=True)
 class IntelligenceRecord:
     artifact_id: str
     title: str
@@ -20,6 +32,7 @@ class IntelligenceRecord:
     validation_status: str
     strategic_score: int | None
     priority_level: str | None
+    departments: tuple[DepartmentMappingItem, ...]
     department: str | None
 
 

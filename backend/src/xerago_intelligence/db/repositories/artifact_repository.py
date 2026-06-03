@@ -38,6 +38,9 @@ class ArtifactRepository:
         """
         Insert a new artifact if the URL is not already stored.
 
+        Duplicate protection is global across all RSS feeds: normalized URL
+        is checked before insert and enforced by uq_artifacts_url.
+
         Returns (artifact, created). On duplicate URL, returns (None, False).
         """
         normalized_url = normalize_url(url)
@@ -62,6 +65,23 @@ class ArtifactRepository:
 
     def count_all(self) -> int:
         return int(self._session.scalar(select(func.count()).select_from(Artifact)) or 0)
+
+    def count_ingested_today(self) -> int:
+        start_of_day = datetime.now(timezone.utc).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+            tzinfo=None,
+        )
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(Artifact)
+                .where(Artifact.ingested_at >= start_of_day)
+            )
+            or 0
+        )
 
     def count_by_source(self, source_id: str) -> int:
         return int(

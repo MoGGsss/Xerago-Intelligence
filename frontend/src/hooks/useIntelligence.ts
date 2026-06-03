@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { getTopIntelligence } from '../services/api'
+import { getLoggedInDepartment } from '../auth/demoAuth'
+import { getIntelligenceList } from '../services/api'
 import type { IntelligenceState } from '../types/intelligence'
+import { sortByDepartmentRelevance } from '../utils/departmentFilters'
 
 export function useIntelligence(): IntelligenceState {
   const [loading, setLoading] = useState<boolean>(true)
@@ -9,15 +11,30 @@ export function useIntelligence(): IntelligenceState {
 
   useEffect(() => {
     let isMounted = true
+    const department = getLoggedInDepartment()
 
-    const fetchTopIntelligence = async () => {
+    const fetchDepartmentIntelligence = async () => {
       setLoading(true)
       setError(null)
 
-      try {
-        const intelligence = await getTopIntelligence()
+      if (!department) {
         if (isMounted) {
-          setData(intelligence)
+          setData([])
+          setError('No department selected.')
+          setLoading(false)
+        }
+        return
+      }
+
+      try {
+        const result = await getIntelligenceList({
+          page: 1,
+          page_size: 100,
+          department,
+        })
+        const sorted = sortByDepartmentRelevance(result.items, department)
+        if (isMounted) {
+          setData(sorted)
         }
       } catch {
         if (isMounted) {
@@ -30,7 +47,7 @@ export function useIntelligence(): IntelligenceState {
       }
     }
 
-    void fetchTopIntelligence()
+    void fetchDepartmentIntelligence()
 
     return () => {
       isMounted = false
