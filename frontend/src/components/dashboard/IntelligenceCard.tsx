@@ -19,6 +19,8 @@ interface IntelligenceCardProps {
   icon: LucideIcon
   departmentImpact?: DepartmentImpactView | null
   departmentLabel?: string
+  sourceName?: string | null
+  reviewMode?: 'production' | 'prototype'
   onSelect?: () => void
 }
 
@@ -63,8 +65,11 @@ export default function IntelligenceCard({
   icon: Icon,
   departmentImpact,
   departmentLabel = 'Your department',
+  sourceName,
+  reviewMode = 'production',
   onSelect,
 }: IntelligenceCardProps) {
+  const isPrototype = reviewMode === 'prototype'
   const [whyExpanded, setWhyExpanded] = useState(false)
   const formattedDate = formatPublishedDate(publishedAt)
   const scoreDisplay =
@@ -105,22 +110,38 @@ export default function IntelligenceCard({
             <Icon size={18} strokeWidth={2} />
           </span>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {priorityLevel ? (
+            {!isPrototype && priorityLevel ? (
               <span
                 className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${priorityStyles(priorityLevel)}`}
               >
                 {priorityLevel}
               </span>
             ) : null}
-            <span className="inline-flex items-center rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold tabular-nums text-white">
-              {scoreDisplay}
-            </span>
+            {!isPrototype ? (
+              <span className="inline-flex items-center rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold tabular-nums text-white">
+                {scoreDisplay}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex max-w-full items-center truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-            {domain}
+        {sourceName ? (
+          <div className="mt-4">
+            <span className="inline-flex max-w-full items-center rounded-lg border-2 border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-violet-900 shadow-sm">
+              {sourceName}
+            </span>
+          </div>
+        ) : null}
+
+        <div className={`flex flex-wrap items-center gap-2 ${sourceName ? 'mt-3' : 'mt-4'}`}>
+          <span
+            className={`inline-flex max-w-full items-center truncate rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+              isPrototype
+                ? 'border-slate-200 bg-slate-50 text-slate-500'
+                : 'border-slate-200 bg-slate-50 text-slate-600'
+            }`}
+          >
+            {isPrototype ? departmentLabel : domain}
           </span>
           <time
             dateTime={publishedAt}
@@ -138,37 +159,41 @@ export default function IntelligenceCard({
           {description}
         </p>
 
-        {departmentImpact ? (
+        {!isPrototype && departmentImpact ? (
           <DepartmentImpactSection
             impact={departmentImpact}
             departmentLabel={departmentLabel}
           />
         ) : null}
 
-        <div className="mt-4 flex-1 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            onClick={() => setWhyExpanded((open) => !open)}
-            aria-expanded={whyExpanded}
-            className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-sm font-semibold text-slate-700 transition-colors duration-200 hover:text-emerald-700"
-          >
-            <span>Why It Matters</span>
-            <ChevronDown
-              size={16}
-              className={`shrink-0 text-slate-400 transition-transform duration-200 ${whyExpanded ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-          <div
-            className={`grid transition-all duration-300 ease-out ${whyExpanded ? 'mt-2 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-          >
-            <div className="overflow-hidden">
-              <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm leading-relaxed text-slate-600">
-                {whyItMatters}
-              </p>
+        {!isPrototype && whyItMatters ? (
+          <div className="mt-4 flex-1 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={() => setWhyExpanded((open) => !open)}
+              aria-expanded={whyExpanded}
+              className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-sm font-semibold text-slate-700 transition-colors duration-200 hover:text-emerald-700"
+            >
+              <span>Why It Matters</span>
+              <ChevronDown
+                size={16}
+                className={`shrink-0 text-slate-400 transition-transform duration-200 ${whyExpanded ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
+            <div
+              className={`grid transition-all duration-300 ease-out ${whyExpanded ? 'mt-2 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+            >
+              <div className="overflow-hidden">
+                <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm leading-relaxed text-slate-600">
+                  {whyItMatters}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1" />
+        )}
 
         <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
           <a
@@ -180,7 +205,7 @@ export default function IntelligenceCard({
             Read Article
             <ExternalLink size={13} strokeWidth={2.5} aria-hidden="true" />
           </a>
-          {artifactId && feedbackDepartmentName ? (
+          {!isPrototype && artifactId && feedbackDepartmentName ? (
             <ArticleFeedbackFooter
               artifactId={artifactId}
               departmentName={feedbackDepartmentName}

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart3 } from 'lucide-react'
 import type { SystemStatusResponse } from '../../types/system'
@@ -14,6 +15,7 @@ interface SectionHeaderProps {
   userEmail?: string
   department?: string
   onLogout?: () => void
+  headerControls?: ReactNode
 }
 
 export default function SectionHeader({
@@ -25,6 +27,7 @@ export default function SectionHeader({
   userEmail,
   department,
   onLogout,
+  headerControls,
 }: SectionHeaderProps) {
   const lastLoginAt = getLastLoginAt()
 
@@ -32,9 +35,12 @@ export default function SectionHeader({
     <header className="border-b border-slate-100 pb-6">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <span className="text-[10px]">●</span>
-            <span>Intelligence Engine Active</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="text-[10px]">●</span>
+              <span>Intelligence Engine Active</span>
+            </div>
+            {headerControls}
           </div>
           <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
             Xerago Intelligence

@@ -44,7 +44,7 @@ def test_codex_ai_engineering_summary() -> None:
 
 
 def test_codex_martech_summary() -> None:
-    result = DepartmentImpactGenerator().generate(_input("MarTech", 62))
+    result = DepartmentImpactGenerator().generate(_input("MarTech & Campaign Services", 62))
     assert result.impact_summary == "Accelerate campaign content generation."
     assert result.impact_category in IMPACT_CATEGORY_NAMES
     assert result.opportunity_type in OPPORTUNITY_TYPE_NAMES
@@ -65,7 +65,7 @@ def test_summary_length_guard() -> None:
             why_it_matters=long_summary,
             domain="industry-trends",
             signal_type="market-narrative",
-            department_name="Strategy & Design",
+            department_name="Strategy, Design & Innovation",
             department_relevance_score=70,
         )
     )

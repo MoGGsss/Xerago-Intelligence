@@ -8,6 +8,10 @@ import type {
   AnalyticsOverview,
   AnalyticsSources,
 } from '../types/analytics'
+import type {
+  PrototypeArticleListResponse,
+  PrototypeDatasetSummary,
+} from '../types/prototype'
 import type { SystemStatusResponse } from '../types/system'
 
 const API_BASE_URL = import.meta.env.DEV ? '' : 'http://127.0.0.1:8000'
@@ -103,6 +107,20 @@ export async function submitArticleFeedback(
       : payload
 
   const response = await apiClient.post<FeedbackCreateResponse>('/v1/feedback', body)
+  return response.data
+}
+
+export async function getPrototypeSummary(): Promise<PrototypeDatasetSummary> {
+  const response = await apiClient.get<PrototypeDatasetSummary>('/v1/prototype/summary')
+  return response.data
+}
+
+export async function getPrototypeArticles(
+  departmentSlug?: string,
+): Promise<PrototypeArticleListResponse> {
+  const response = await apiClient.get<PrototypeArticleListResponse>('/v1/prototype/articles', {
+    params: departmentSlug ? { department_slug: departmentSlug } : undefined,
+  })
   return response.data
 }
 

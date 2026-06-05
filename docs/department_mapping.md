@@ -4,13 +4,15 @@
 
 Maps enriched intelligence artifacts to **Xerago company departments** with relevance scores. Orthogonal to strategic scoring (`strategic_score`); consumes stored enrichment output only.
 
-Version: `dept_map_v1.0.0`
+Version: `dept_map_v2.0.0` (Phase 1A consolidation)
 
 ---
 
-## Departments (23)
+## Departments (10)
 
-Account Management, Administration, AI Engineering, Campaign Services, Content, Digital Analytics, Digital Marketing, Digital Operations, Finance & Legal, Founder's Office, HR, IT Operations & Support, MarTech, New Initiatives, Operations, Partner Management, Program Management, QC, Revenue Growth, Sales, Solutions, Strategy & Design, Xerago Securities.
+AI Engineering · Solutions · Digital Analytics · Strategy, Design & Innovation · Digital Operations · Sales · Account Management · Content & Digital Marketing · MarTech & Campaign Services · Xerago Securities
+
+Legacy names and slugs (23-department registry) remain valid for **90 days** via alias resolution — see `DEPARTMENT_SLUG_ALIASES` / `DEPARTMENT_NAME_ALIASES` in `backend/src/xerago_intelligence/taxonomy/departments.py`.
 
 ---
 
@@ -35,7 +37,7 @@ Constraints: unique `(artifact_id, department_name)`; up to **5** departments pe
 2. **Signal boosts** — additive from enrichment `signal_type` (L1).
 3. **Keyword boosts** — optional match on `title`, `summary`, `why_it_matters`.
 4. **Confidence dampening** — multiply by `confidence_score / 100`.
-5. **Selection** — include scores ≥ 40; cap at 5; fallback to Strategy & Design (or Founder's Office for `industry-trends`).
+5. **Selection** — include scores ≥ 40; cap at 5; fallback to Strategy, Design & Innovation (including `industry-trends`).
 
 ---
 
@@ -45,7 +47,9 @@ Constraints: unique `(artifact_id, department_name)`; up to **5** departments pe
 enrich_artifact() → StrategicScorer (unchanged) → DepartmentMappingService.map_artifact()
 ```
 
-Backfill: `python scripts/backfill_department_mappings.py` (`--force` to remap all).
+Backfill mappings: `python scripts/backfill_department_mappings.py` (`--force` to remap all).
+
+Consolidate legacy DB rows to 10 departments: `python scripts/backfill_department_consolidation.py`.
 
 ---
 
@@ -56,11 +60,12 @@ Backfill: `python scripts/backfill_department_mappings.py` (`--force` to remap a
 - `departments[]` — `{ department_name, department_relevance_score }`
 - `department` — primary (highest score); deprecated alias
 
-Filter: `GET /intelligence?department=MarTech` or `GET /intelligence/department/MarTech`.
+Filter: `GET /intelligence?department=MarTech` resolves to MarTech & Campaign Services (alias).
 
 ---
 
 ## Related
 
+- `docs/department_consolidation_phase1a_report.md` — migration impact
 - `docs/categories.md` — domain/signal taxonomy (mapping inputs)
 - `backend/src/xerago_intelligence/taxonomy/` — registry and rules

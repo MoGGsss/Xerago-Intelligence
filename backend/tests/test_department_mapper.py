@@ -14,13 +14,24 @@ from xerago_intelligence.taxonomy.department_mapper import (
     DepartmentMappingInput,
 )
 from xerago_intelligence.taxonomy.department_rules import DEPARTMENT_MAPPING_VERSION
-from xerago_intelligence.taxonomy.departments import DEPARTMENTS, is_valid_department
+from xerago_intelligence.taxonomy.departments import (
+    DEPARTMENTS,
+    canonical_department_name,
+    is_valid_department,
+)
 
 
 def test_all_departments_registered() -> None:
-    assert len(DEPARTMENTS) == 23
+    assert len(DEPARTMENTS) == 10
     for dept in DEPARTMENTS:
         assert is_valid_department(dept.display_name)
+
+
+def test_legacy_department_aliases_resolve() -> None:
+    assert canonical_department_name("Founder's Office") == "Strategy, Design & Innovation"
+    assert canonical_department_name("Finance & Legal") == "Account Management"
+    assert canonical_department_name("MarTech") == "MarTech & Campaign Services"
+    assert is_valid_department("Operations")
 
 
 def test_martech_domain_maps_multiple_departments() -> None:
@@ -35,8 +46,8 @@ def test_martech_domain_maps_multiple_departments() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "MarTech" in names
-    assert "Content" in names
+    assert "MarTech & Campaign Services" in names
+    assert "Content & Digital Marketing" in names
     assert len(result.departments) <= 5
     assert result.departments[0].department_relevance_score >= result.departments[-1].department_relevance_score
 
@@ -52,11 +63,11 @@ def test_fallback_when_no_threshold_met() -> None:
         )
     )
     assert len(result.departments) == 1
-    assert result.departments[0].department_name == "Strategy & Design"
+    assert result.departments[0].department_name == "Strategy, Design & Innovation"
 
 
-def test_mapping_version_is_v1_3_1() -> None:
-    assert DEPARTMENT_MAPPING_VERSION == "dept_map_v1.3.1"
+def test_mapping_version_is_v2() -> None:
+    assert DEPARTMENT_MAPPING_VERSION == "dept_map_v2.0.0"
 
 
 def test_martech_gtm_article_maps_to_sales() -> None:
@@ -74,7 +85,7 @@ def test_martech_gtm_article_maps_to_sales() -> None:
     assert "Sales" in names
 
 
-def test_cloud_platforms_devops_maps_to_operations() -> None:
+def test_cloud_platforms_devops_maps_to_digital_operations() -> None:
     result = DepartmentMapper().compute(
         DepartmentMappingInput(
             domain="cloud-platforms",
@@ -86,7 +97,7 @@ def test_cloud_platforms_devops_maps_to_operations() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "Operations" in names
+    assert "Digital Operations" in names
 
 
 def test_research_signals_data_analysis_maps_to_digital_analytics() -> None:
@@ -121,7 +132,7 @@ def test_salesforce_article_maps_to_sales() -> None:
     assert sales.department_relevance_score >= 40
 
 
-def test_ibm_operations_article_maps_to_operations() -> None:
+def test_ibm_operations_article_maps_to_digital_operations() -> None:
     result = DepartmentMapper().compute(
         DepartmentMappingInput(
             domain="automation",
@@ -133,7 +144,7 @@ def test_ibm_operations_article_maps_to_operations() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "Operations" in names
+    assert "Digital Operations" in names
 
 
 def test_analytics_article_maps_to_digital_analytics() -> None:
@@ -170,7 +181,7 @@ def test_generic_ai_article_maps_to_ai_engineering_only() -> None:
     assert names == ["AI Engineering"]
 
 
-def test_martech_domain_maps_to_content() -> None:
+def test_martech_domain_maps_to_content_digital_marketing() -> None:
     result = DepartmentMapper().compute(
         DepartmentMappingInput(
             domain="martech",
@@ -182,12 +193,16 @@ def test_martech_domain_maps_to_content() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "Content" in names
-    content = next(item for item in result.departments if item.department_name == "Content")
+    assert "Content & Digital Marketing" in names
+    content = next(
+        item
+        for item in result.departments
+        if item.department_name == "Content & Digital Marketing"
+    )
     assert content.department_relevance_score >= 40
 
 
-def test_industry_trends_domain_maps_to_content() -> None:
+def test_industry_trends_domain_maps_to_content_digital_marketing() -> None:
     result = DepartmentMapper().compute(
         DepartmentMappingInput(
             domain="industry-trends",
@@ -199,10 +214,10 @@ def test_industry_trends_domain_maps_to_content() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "Content" in names
+    assert "Content & Digital Marketing" in names
 
 
-def test_enterprise_ai_domain_does_not_map_to_content() -> None:
+def test_enterprise_ai_domain_does_not_map_to_content_digital_marketing() -> None:
     result = DepartmentMapper().compute(
         DepartmentMappingInput(
             domain="enterprise-ai",
@@ -214,11 +229,17 @@ def test_enterprise_ai_domain_does_not_map_to_content() -> None:
         )
     )
     names = {item.department_name for item in result.departments}
-    assert "Content" not in names
+    assert "Content & Digital Marketing" not in names
 
 
-if __name__ == "__main__":
-    test_all_departments_registered()
-    test_martech_domain_maps_multiple_departments()
-    test_fallback_when_no_threshold_met()
-    print("All department mapper tests passed.")
+def test_industry_trends_fallback_is_strategy_design_innovation() -> None:
+    result = DepartmentMapper().compute(
+        DepartmentMappingInput(
+            domain="industry-trends",
+            signal_type="market-narrative",
+            summary="Macro shift.",
+            why_it_matters="Planning.",
+            confidence_score=10,
+        )
+    )
+    assert result.departments[0].department_name == "Strategy, Design & Innovation"

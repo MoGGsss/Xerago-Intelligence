@@ -66,7 +66,7 @@ def test_records_with_impacts_populates_fields() -> None:
     assert records[0].opportunity_type
     assert records[0].department_opportunity_score is not None
     assert records[0].impact_reason
-    assert records[0].impact_version == "dept_impact_v1.0.0"
+    assert records[0].impact_version == "dept_impact_v2.0.0"
 
 
 def test_backfill_impacts_skips_when_no_mappings() -> None:

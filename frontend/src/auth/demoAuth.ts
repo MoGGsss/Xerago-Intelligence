@@ -1,4 +1,9 @@
-import { COMPANY_DEPARTMENTS } from '../constants/departments'
+import {
+  COMPANY_DEPARTMENTS,
+  DEPARTMENT_BY_LABEL,
+  departmentForSlug,
+  resolveDepartmentLabel,
+} from '../constants/departments'
 
 export const DEMO_PASSWORD = 'Xerago@123'
 
@@ -31,7 +36,22 @@ export function findDemoUser(email: string, password: string): DemoUser | null {
 }
 
 export function departmentForEmail(email: string): string | null {
-  return DEMO_USER_BY_EMAIL[email.trim().toLowerCase()]?.department ?? null
+  const user = DEMO_USER_BY_EMAIL[email.trim().toLowerCase()]
+  if (user) {
+    return user.department
+  }
+  const localPart = email.trim().toLowerCase().split('@')[0] ?? ''
+  const dept = departmentForSlug(localPart)
+  return dept?.label ?? null
+}
+
+/** Resolve stored or legacy department label to canonical label. */
+export function canonicalDepartmentLabel(label: string | null): string | null {
+  if (!label) {
+    return null
+  }
+  const resolved = resolveDepartmentLabel(label)
+  return DEPARTMENT_BY_LABEL[resolved]?.label ?? resolved
 }
 
 export function isLoggedIn(): boolean {

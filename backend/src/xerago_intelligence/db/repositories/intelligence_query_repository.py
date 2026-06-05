@@ -16,6 +16,7 @@ from xerago_intelligence.db.repositories.department_mapping_repository import (
     DepartmentMappingRepository,
 )
 from xerago_intelligence.taxonomy import department_for_domain
+from xerago_intelligence.taxonomy.departments import canonical_department_name
 from xerago_intelligence.types.intelligence import (
     DepartmentMappingItem,
     IntelligencePage,
@@ -70,12 +71,12 @@ class IntelligenceQueryRepository:
                 == filters.priority.strip().upper()
             )
         if filters.department:
+            dept_name = canonical_department_name(filters.department) or filters.department.strip()
             count_stmt = count_stmt.join(
                 ArtifactDepartmentMapping,
                 Artifact.artifact_id == ArtifactDepartmentMapping.artifact_id,
             ).where(
-                ArtifactDepartmentMapping.department_name
-                == filters.department.strip()
+                ArtifactDepartmentMapping.department_name == dept_name
             )
         if filters.query:
             count_stmt = count_stmt.where(self._search_predicate(filters.query))
@@ -163,11 +164,12 @@ class IntelligenceQueryRepository:
                 func.upper(ArtifactEnrichment.priority_level) == priority.strip().upper()
             )
         if department:
+            dept_name = canonical_department_name(department) or department.strip()
             stmt = stmt.join(
                 ArtifactDepartmentMapping,
                 Artifact.artifact_id == ArtifactDepartmentMapping.artifact_id,
             ).where(
-                ArtifactDepartmentMapping.department_name == department.strip()
+                ArtifactDepartmentMapping.department_name == dept_name
             )
         if query:
             stmt = stmt.where(self._search_predicate(query))

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from xerago_intelligence.taxonomy.impact_categories import IMPACT_CATEGORY_NAMES
 from xerago_intelligence.taxonomy.opportunity_types import OPPORTUNITY_TYPE_NAMES
 
-DEPARTMENT_IMPACT_VERSION = "dept_impact_v1.0.0"
+DEPARTMENT_IMPACT_VERSION = "dept_impact_v2.0.0"
 MAX_IMPACT_SUMMARY_LENGTH = 120
 GLOBAL_FALLBACK_CATEGORY = "Workflow Automation"
 GLOBAL_FALLBACK_OPPORTUNITY = "Operational Efficiency"
@@ -23,8 +23,6 @@ class DepartmentImpactProfile:
     opportunity_by_signal: tuple[tuple[str, str], ...] = ()
 
 
-# Keyword rules: first matching row in list order wins among same priority tier.
-# Higher priority number = preferred when multiple rules match.
 CATEGORY_KEYWORD_RULES: tuple[tuple[tuple[str, ...], str, str], ...] = (
     (("codex", "copilot", "codegen", "coding agent"), "AI Coding", "CAT-KW-AI-CODE"),
     (("agentic", "autonomous agent", "ai agent", "langgraph"), "Agentic AI", "CAT-KW-AGENT"),
@@ -69,18 +67,14 @@ SIGNAL_CATEGORY_DEFAULTS: dict[str, tuple[str, str]] = {
 
 DEPARTMENT_CATEGORY_BIAS: dict[str, tuple[str, str]] = {
     "ai-engineering": ("AI Coding", "CAT-DEPT-AI"),
-    "martech": ("Campaign Automation", "CAT-DEPT-MARTECH"),
-    "campaign-services": ("Campaign Automation", "CAT-DEPT-CAMP"),
+    "martech-campaign-services": ("Campaign Automation", "CAT-DEPT-MARTECH"),
     "digital-analytics": ("Analytics", "CAT-DEPT-DA"),
-    "digital-marketing": ("Content Generation", "CAT-DEPT-DM"),
-    "content": ("Content Generation", "CAT-DEPT-CONTENT"),
+    "content-digital-marketing": ("Content Generation", "CAT-DEPT-CDM"),
     "sales": ("Lead Scoring", "CAT-DEPT-SALES"),
-    "revenue-growth": ("Lead Scoring", "CAT-DEPT-RG"),
-    "partner-management": ("Workflow Automation", "CAT-DEPT-PM"),
-    "finance-legal": ("Governance", "CAT-DEPT-FL"),
+    "account-management": ("Governance", "CAT-DEPT-AM"),
     "xerago-securities": ("Security", "CAT-DEPT-SEC"),
-    "it-operations-support": ("Security", "CAT-DEPT-IT"),
-    "hr": ("Knowledge Management", "CAT-DEPT-HR"),
+    "digital-operations": ("Security", "CAT-DEPT-DO"),
+    "strategy-design-innovation": ("Forecasting", "CAT-DEPT-SDI"),
 }
 
 SIGNAL_OPPORTUNITY_DEFAULTS: dict[str, tuple[str, str]] = {
@@ -111,28 +105,15 @@ DOMAIN_OPPORTUNITY_DEFAULTS: dict[str, tuple[str, str]] = {
 
 DEPARTMENT_OPPORTUNITY_BIAS: dict[str, tuple[str, str]] = {
     "ai-engineering": ("Innovation", "OPP-DEPT-AI"),
-    "martech": ("Productivity", "OPP-DEPT-MARTECH"),
-    "campaign-services": ("Productivity", "OPP-DEPT-CAMP"),
+    "martech-campaign-services": ("Productivity", "OPP-DEPT-MARTECH"),
     "digital-analytics": ("Operational Efficiency", "OPP-DEPT-DA"),
-    "digital-marketing": ("Customer Experience", "OPP-DEPT-DM"),
-    "content": ("Productivity", "OPP-DEPT-CONTENT"),
+    "content-digital-marketing": ("Customer Experience", "OPP-DEPT-CDM"),
     "sales": ("Revenue Growth", "OPP-DEPT-SALES"),
-    "revenue-growth": ("Revenue Growth", "OPP-DEPT-RG"),
-    "partner-management": ("Revenue Growth", "OPP-DEPT-PM"),
-    "account-management": ("Customer Experience", "OPP-DEPT-AM"),
-    "finance-legal": ("Compliance", "OPP-DEPT-FL"),
+    "account-management": ("Compliance", "OPP-DEPT-AM"),
     "xerago-securities": ("Risk Management", "OPP-DEPT-SEC"),
-    "it-operations-support": ("Risk Management", "OPP-DEPT-IT"),
-    "hr": ("Employee Experience", "OPP-DEPT-HR"),
-    "operations": ("Operational Efficiency", "OPP-DEPT-OPS"),
     "digital-operations": ("Automation", "OPP-DEPT-DO"),
-    "qc": ("Risk Management", "OPP-DEPT-QC"),
-    "program-management": ("Operational Efficiency", "OPP-DEPT-PGM"),
     "solutions": ("Customer Experience", "OPP-DEPT-SOL"),
-    "strategy-design": ("Innovation", "OPP-DEPT-STRAT"),
-    "founders-office": ("Innovation", "OPP-DEPT-FOUNDERS"),
-    "new-initiatives": ("Innovation", "OPP-DEPT-NEW"),
-    "administration": ("Operational Efficiency", "OPP-DEPT-ADMIN"),
+    "strategy-design-innovation": ("Innovation", "OPP-DEPT-SDI"),
 }
 
 OPPORTUNITY_TYPE_SCORE_WEIGHT: dict[str, int] = {
@@ -148,7 +129,6 @@ OPPORTUNITY_TYPE_SCORE_WEIGHT: dict[str, int] = {
     "Operational Efficiency": 9,
 }
 
-# Department profiles: summary templates use {capability}, {content_type}, {deliverable}, {product}, {topic}
 DEPARTMENT_IMPACT_PROFILES: dict[str, DepartmentImpactProfile] = {
     "ai-engineering": DepartmentImpactProfile(
         default_category="AI Coding",
@@ -158,11 +138,14 @@ DEPARTMENT_IMPACT_PROFILES: dict[str, DepartmentImpactProfile] = {
         category_by_signal=(("product-technology", "AI Coding"),),
         opportunity_by_signal=(("product-technology", "Innovation"),),
     ),
-    "martech": DepartmentImpactProfile(
+    "martech-campaign-services": DepartmentImpactProfile(
         default_category="Campaign Automation",
         default_opportunity="Productivity",
         summary_default="Accelerate {content_type} generation for campaigns.",
-        summary_by_signal=(("product-technology", "Accelerate campaign content generation."),),
+        summary_by_signal=(
+            ("product-technology", "Accelerate campaign content generation."),
+            ("go-to-market", "Adjust campaign programs for new GTM changes."),
+        ),
         category_by_signal=(
             ("product-technology", "Content Generation"),
             ("go-to-market", "Campaign Automation"),
@@ -174,15 +157,10 @@ DEPARTMENT_IMPACT_PROFILES: dict[str, DepartmentImpactProfile] = {
         summary_default="Reduce {deliverable} creation effort in client engagements.",
         summary_by_signal=(
             ("product-technology", "Reduce proposal creation effort in client engagements."),
+            ("go-to-market", "Align revenue plays with new GTM changes."),
         ),
         category_by_signal=(("product-technology", "Lead Scoring"),),
         opportunity_by_signal=(("go-to-market", "Revenue Growth"),),
-    ),
-    "campaign-services": DepartmentImpactProfile(
-        default_category="Campaign Automation",
-        default_opportunity="Productivity",
-        summary_default="Streamline campaign execution for {content_type} programs.",
-        summary_by_signal=(("go-to-market", "Adjust campaign programs for new GTM changes."),),
     ),
     "digital-analytics": DepartmentImpactProfile(
         default_category="Analytics",
@@ -190,69 +168,31 @@ DEPARTMENT_IMPACT_PROFILES: dict[str, DepartmentImpactProfile] = {
         summary_default="Evaluate new measurement approaches for {topic}.",
         category_by_signal=(("product-technology", "Analytics"),),
     ),
-    "digital-marketing": DepartmentImpactProfile(
+    "content-digital-marketing": DepartmentImpactProfile(
         default_category="Content Generation",
         default_opportunity="Customer Experience",
-        summary_default="Improve digital engagement using {topic} capabilities.",
+        summary_default="Scale {content_type} production across client programs.",
+        summary_by_signal=(("market-narrative", "Adapt editorial workflows to market narrative shifts."),),
     ),
     "digital-operations": DepartmentImpactProfile(
         default_category="Workflow Automation",
         default_opportunity="Automation",
         summary_default="Automate operational workflows impacted by {topic}.",
-    ),
-    "content": DepartmentImpactProfile(
-        default_category="Content Generation",
-        default_opportunity="Productivity",
-        summary_default="Scale {content_type} production across client programs.",
+        summary_by_signal=(("operational-incident", "Activate incident response for {topic}."),),
     ),
     "solutions": DepartmentImpactProfile(
         default_category="Workflow Automation",
         default_opportunity="Customer Experience",
         summary_default="Assess solution design implications of {product} for client delivery.",
         category_by_signal=(("product-technology", "Agentic AI"),),
-    ),
-    "partner-management": DepartmentImpactProfile(
-        default_category="Workflow Automation",
-        default_opportunity="Revenue Growth",
-        summary_default="Assess partner ecosystem implications of {product}.",
-        summary_by_signal=(("partnership-ecosystem", "Coordinate partner response to {product} changes."),),
+        summary_by_signal=(
+            ("partnership-ecosystem", "Coordinate partner response to {product} changes."),
+        ),
     ),
     "account-management": DepartmentImpactProfile(
-        default_category="Customer Support",
-        default_opportunity="Customer Experience",
-        summary_default="Brief key accounts on client impact from {topic}.",
-    ),
-    "revenue-growth": DepartmentImpactProfile(
-        default_category="Lead Scoring",
-        default_opportunity="Revenue Growth",
-        summary_default="Identify revenue motions influenced by {topic}.",
-        summary_by_signal=(("go-to-market", "Align revenue plays with new GTM changes."),),
-    ),
-    "program-management": DepartmentImpactProfile(
-        default_category="Workflow Automation",
-        default_opportunity="Operational Efficiency",
-        summary_default="Update delivery plans to account for {topic} changes.",
-    ),
-    "operations": DepartmentImpactProfile(
-        default_category="Workflow Automation",
-        default_opportunity="Operational Efficiency",
-        summary_default="Improve operational throughput related to {topic}.",
-    ),
-    "it-operations-support": DepartmentImpactProfile(
-        default_category="Security",
-        default_opportunity="Risk Management",
-        summary_default="Review infrastructure and support impact from {topic}.",
-        summary_by_signal=(("operational-incident", "Activate incident response for {topic}."),),
-    ),
-    "qc": DepartmentImpactProfile(
-        default_category="Workflow Automation",
-        default_opportunity="Risk Management",
-        summary_default="Expand quality checks for deliverables affected by {topic}.",
-    ),
-    "finance-legal": DepartmentImpactProfile(
         default_category="Governance",
         default_opportunity="Compliance",
-        summary_default="Review compliance exposure introduced by {topic}.",
+        summary_default="Brief key accounts on client impact from {topic}.",
         summary_by_signal=(("regulatory-trust", "Update compliance controls for regulatory changes."),),
     ),
     "xerago-securities": DepartmentImpactProfile(
@@ -260,31 +200,14 @@ DEPARTMENT_IMPACT_PROFILES: dict[str, DepartmentImpactProfile] = {
         default_opportunity="Risk Management",
         summary_default="Assess security risk posture changes from {topic}.",
     ),
-    "hr": DepartmentImpactProfile(
-        default_category="Knowledge Management",
-        default_opportunity="Employee Experience",
-        summary_default="Communicate workforce implications of {topic} to teams.",
-    ),
-    "administration": DepartmentImpactProfile(
-        default_category="Workflow Automation",
-        default_opportunity="Operational Efficiency",
-        summary_default="Align administrative processes with {topic} updates.",
-    ),
-    "founders-office": DepartmentImpactProfile(
+    "strategy-design-innovation": DepartmentImpactProfile(
         default_category="Forecasting",
         default_opportunity="Innovation",
-        summary_default="Evaluate strategic market implications of {topic}.",
-        summary_by_signal=(("market-narrative", "Brief leadership on market narrative shifts."),),
-    ),
-    "strategy-design": DepartmentImpactProfile(
-        default_category="Analytics",
-        default_opportunity="Innovation",
         summary_default="Monitor {topic} developments for strategic planning.",
-    ),
-    "new-initiatives": DepartmentImpactProfile(
-        default_category="Agentic AI",
-        default_opportunity="Innovation",
-        summary_default="Explore pilot opportunities for {topic} in new offerings.",
+        summary_by_signal=(
+            ("market-narrative", "Brief leadership on market narrative shifts."),
+            ("research-innovation", "Explore pilot opportunities for {topic} in new offerings."),
+        ),
     ),
 }
 
@@ -294,7 +217,6 @@ GLOBAL_FALLBACK_PROFILE = DepartmentImpactProfile(
     summary_default="Monitor {topic} developments for departmental readiness.",
 )
 
-# Variants to avoid duplicate summaries on the same artifact
 SUMMARY_VERB_VARIANTS: dict[str, tuple[str, ...]] = {
     "Monitor": ("Track", "Review", "Assess", "Evaluate"),
     "Build": ("Develop", "Expand", "Strengthen", "Advance"),

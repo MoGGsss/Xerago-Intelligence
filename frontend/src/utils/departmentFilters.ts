@@ -1,5 +1,5 @@
 import type { DepartmentImpactView, IntelligenceItem } from '../types/intelligence'
-import { departmentForEmail } from '../auth/demoAuth'
+import { canonicalDepartmentLabel, departmentForEmail } from '../auth/demoAuth'
 import {
   COMPANY_DEPARTMENTS,
   DEPARTMENT_BY_LABEL,
@@ -179,8 +179,9 @@ export function getDepartmentView(departmentName: string | null): DepartmentView
 }
 
 export function getDepartmentViewForEmail(email: string | null): DepartmentViewConfig {
-  const department =
+  const raw =
     departmentForEmail(email ?? '') ?? localStorage.getItem('department')
+  const department = canonicalDepartmentLabel(raw)
   return getDepartmentView(department)
 }
 

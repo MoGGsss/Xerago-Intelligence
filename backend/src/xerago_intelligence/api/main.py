@@ -14,6 +14,7 @@ from xerago_intelligence.api.routers import (
     analytics,
     feedback,
     intelligence,
+    prototype,
     sources,
     system,
 )
@@ -70,6 +71,7 @@ app.include_router(feedback.router, prefix="/v1")
 app.include_router(sources.router, prefix="/v1")
 app.include_router(system.router, prefix="/v1")
 app.include_router(analytics.router, prefix="/v1")
+app.include_router(prototype.router, prefix="/v1")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])

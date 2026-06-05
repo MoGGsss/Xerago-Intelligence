@@ -60,6 +60,13 @@ class Settings(BaseSettings):
         alias="NEGATIVE_SCORE_SKIP_THRESHOLD",
     )
 
+    # Phase 2 prototype dataset (file-backed; does not write to production artifacts)
+    prototype_mode: bool = Field(default=False, alias="PROTOTYPE_MODE")
+    max_articles_per_source: int = Field(
+        default=10,
+        alias="MAX_ARTICLES_PER_SOURCE",
+    )
+
     # Repository root (contains registry/sources.yaml)
     project_root: Path | None = Field(default=None, alias="PROJECT_ROOT")
 
@@ -133,6 +140,19 @@ class Settings(BaseSettings):
     @property
     def repos_yaml_path(self) -> Path:
         return self.registry_dir / "repos.yaml"
+
+    @property
+    def prototype_sources_yaml_path(self) -> Path:
+        return self.registry_dir / "prototype_sources.yaml"
+
+    @property
+    def prototype_data_dir(self) -> Path:
+        return self.resolve_project_root() / "data" / "prototype"
+
+    @property
+    def fresh_domain_data_dir(self) -> Path:
+        """File-backed fresh domain corpus (enrichment pipeline; no production artifacts)."""
+        return self.resolve_project_root() / "data" / "fresh_domain"
 
     def resolve_project_root(self) -> Path:
         if self.project_root is not None:

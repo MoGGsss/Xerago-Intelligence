@@ -39,7 +39,7 @@ class DepartmentImpactGenerator:
     def generate(self, inputs: DepartmentImpactInput) -> DepartmentImpactResult:
         domain = inputs.domain.strip().lower()
         signal = _normalize_signal(inputs.signal_type)
-        dept_slug = department_slug(inputs.department_name) or "strategy-design"
+        dept_slug = department_slug(inputs.department_name) or "strategy-design-innovation"
         profile = DEPARTMENT_IMPACT_PROFILES.get(dept_slug, GLOBAL_FALLBACK_PROFILE)
         text = _text_blob(inputs.title, inputs.summary, inputs.why_it_matters)
 
