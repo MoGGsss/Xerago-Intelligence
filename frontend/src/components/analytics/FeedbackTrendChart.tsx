@@ -26,7 +26,7 @@ export default function FeedbackTrendChart({ summary }: FeedbackTrendChartProps)
         <p className="text-sm text-slate-400">No feedback recorded yet</p>
       ) : (
         <>
-          <div className="flex h-48 items-end gap-1.5">
+          <div className="flex h-48 gap-1.5">
             {summary.trends.map((point) => {
               const positiveHeight = Math.max(
                 2,
@@ -43,9 +43,9 @@ export default function FeedbackTrendChart({ summary }: FeedbackTrendChartProps)
               return (
                 <div
                   key={point.date}
-                  className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1"
+                  className="flex min-w-0 flex-1 flex-col items-center gap-1"
                 >
-                  <div className="flex w-full items-end justify-center gap-0.5" style={{ height: '100%' }}>
+                  <div className="flex min-h-0 w-full flex-1 items-end justify-center gap-0.5">
                     <div
                       className="w-[42%] rounded-t bg-emerald-500"
                       style={{ height: `${positiveHeight}%` }}
@@ -57,7 +57,7 @@ export default function FeedbackTrendChart({ summary }: FeedbackTrendChartProps)
                       title={`${label}: ${point.negative} negative`}
                     />
                   </div>
-                  <span className="text-[9px] text-slate-500">{label}</span>
+                  <span className="shrink-0 text-[9px] text-slate-500">{label}</span>
                 </div>
               )
             })}

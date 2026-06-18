@@ -24,23 +24,25 @@ export default function CountBarChart({
       {items.length === 0 ? (
         <p className="text-sm text-slate-400">No data yet</p>
       ) : (
-        <div className="flex h-52 items-end gap-2">
+        <div className="flex h-52 gap-2">
           {items.map((item) => {
             const heightPct = Math.max(8, Math.round((item.count / maxCount) * 100))
             return (
               <div
                 key={item.label}
-                className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2"
+                className="flex min-w-0 flex-1 flex-col items-center gap-2"
               >
-                <span className="text-[10px] font-semibold tabular-nums text-slate-600">
+                <span className="shrink-0 text-[10px] font-semibold tabular-nums text-slate-600">
                   {item.count}
                 </span>
-                <div
-                  className={`w-full rounded-t-md ${barClassName}`}
-                  style={{ height: `${heightPct}%` }}
-                  title={`${item.label}: ${item.count}`}
-                />
-                <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-slate-500">
+                <div className="flex min-h-0 w-full flex-1 items-end">
+                  <div
+                    className={`w-full rounded-t-md ${barClassName}`}
+                    style={{ height: `${heightPct}%` }}
+                    title={`${item.label}: ${item.count}`}
+                  />
+                </div>
+                <span className="line-clamp-2 w-full shrink-0 text-center text-[10px] leading-tight text-slate-500">
                   {item.label}
                 </span>
               </div>
